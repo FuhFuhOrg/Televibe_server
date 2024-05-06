@@ -25,7 +25,7 @@ namespace shooter_server
             this.port = port;
         }
 
-        public async Task ExecuteSqlCommand(Lobby lobby, WebSocket webSocket, string sqlCommand, Player player, int id_msg, int id_user, string message)
+        public async Task ExecuteSqlCommand(Lobby lobby, WebSocket webSocket, string sqlCommand, Player player)
         {
             Console.WriteLine(sqlCommand);
             // Создание соединения с базой данных
@@ -145,12 +145,21 @@ namespace shooter_server
             }
         }
 
-        private async Task SendMessage(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws, RSAParameters PublicKey, int id_msg = -1, int id_user = -1, string msg = "")
+        private async Task SendMessage(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws, RSAParameters PublicKey)
         {
             using (var cursor = dbConnection.CreateCommand())
             {
                 try
                 {
+                    List<string> credentials = new List<string>(sqlCommand.Split(' '));
+
+                    credentials.RemoveAt(0);
+                    int requestId = int.Parse(credentials[0]);
+
+                    string id_msg = credentials[1];
+                    string id_user = credentials[2];
+                    string msg = credentials[3];
+
                     cursor.CommandText = $"INSERT INTO users (id_msg, id_user) VALUES ('{id_msg}', '{id_user}')";
 
                     RSA rsa = RSA.Create();
@@ -161,6 +170,8 @@ namespace shooter_server
                     byte[] encryptedData = rsa.Encrypt(data, RSAEncryptionPadding.OaepSHA256);
 
                     cursor.CommandText = $"INSERT INTO users (msg) VALUES ('{encryptedData}')";
+
+                    lobby.SendMessagePlayer($"/ans true", ws, requestId);
                 }
                 catch (Exception e)
                 {
