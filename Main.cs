@@ -19,7 +19,7 @@ namespace shooter_server
         static async Task Main()
         {
             Console.WriteLine("START");
-            int port = 7825;
+            int port = 17825;
             HttpListener httpListener = new HttpListener();
             httpListener.Prefixes.Add($"http://+:{port}/");
             httpListener.Start();
