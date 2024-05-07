@@ -91,28 +91,41 @@ namespace shooter_server
         // GenerateUniqueUserId
         private async Task GenerateUniqueUserId(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
-            const int max_user_id = int.MaxValue;
-            Random random = new Random();
-
-            int idUser;
-
-            do
+            try
             {
-                idUser = random.Next(max_user_id);
+                List<string> credentials = new List<string>(sqlCommand.Split(' '));
+                credentials.RemoveAt(0);
+                int requestId = int.Parse(credentials[0]);
 
-                using (var cursor = dbConnection.CreateCommand())
+                const int max_user_id = int.MaxValue;
+                Random random = new Random();
+
+                int idUser;
+
+                do
                 {
-                    if (cursor.CommandText == $"SELECT COUNT(*) FROM users WHERE idUser = {idUser}")
-                    {
-                        idUser = -1;
-                    }
-                }
-            } while (idUser == -1);
+                    idUser = random.Next(max_user_id);
 
-            SendRegistrationResponse(idUser, "success");
+                    using (var cursor = dbConnection.CreateCommand())
+                    {
+                        if (cursor.CommandText == $"SELECT COUNT(*) FROM users WHERE idUser = {idUser}")
+                        {
+                            idUser = -1;
+                        }
+                    }
+                } while (idUser == -1);
+
+                lobby.SendMessagePlayer($"/ans true {idUser}", ws, requestId);
+
+                //SendRegistrationResponse(idUser, "success");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error GenerateUniqueUserId command: {e}");
+            }
         }
 
-        // RefactorMessage id_msg msg
+        // RefactorMessage idMsg msg
         private async Task RefactorMessage(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
             using (var cursor = dbConnection.CreateCommand())
@@ -123,7 +136,8 @@ namespace shooter_server
 
                     credentials.RemoveAt(0);
 
-                    int idMsg = int.Parse(credentials[0]);
+                    int requestId = int.Parse(credentials[0]);
+                    int idMsg = int.Parse(credentials[1]);
                     byte[] msg = Encoding.UTF8.GetBytes(credentials[4]);
 
                     cursor.CommandText = @"UPDATE chat_users SET msg = @msg WHERE idMsg = @idMsg;";
