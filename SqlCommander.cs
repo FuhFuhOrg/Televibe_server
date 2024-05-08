@@ -236,7 +236,7 @@ namespace shooter_server
                     {
                         Console.WriteLine(idChat + " " + idChat.GetType());
 
-                        cursor.Parameters.AddWithValue("idChat", idChat.ToString());
+                        cursor.Parameters.AddWithValue("idChat", idChat);
 
                         cursor.CommandText = $"SELECT COUNT(*) FROM chat WHERE id_chat = @idChat";
 
