@@ -234,8 +234,12 @@ namespace shooter_server
 
                     using (var cursor = dbConnection.CreateCommand())
                     {
-                        Console.WriteLine(idChat);
-                        cursor.CommandText = $"SELECT COUNT(*) FROM chat WHERE id_chat = {idChat}";
+                        Console.WriteLine(idChat + " " + idChat.GetType());
+
+                        cursor.Parameters.AddWithValue("idChat", idChat.ToString());
+
+                        cursor.CommandText = $"SELECT COUNT(*) FROM chat WHERE id_chat = @idChat";
+
                         long likedCount = (long)cursor.ExecuteScalar();
 
                         if (likedCount > 0)
