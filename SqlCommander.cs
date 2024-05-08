@@ -188,7 +188,7 @@ namespace shooter_server
 
                     using (var cursor = dbConnection.CreateCommand())
                     {
-                        cursor.CommandText = $"SELECT COUNT(*) FROM chat_users WHERE idUser = {idUser}";
+                        cursor.CommandText = $"SELECT COUNT(*) FROM chat_users WHERE id_user = {idUser}";
                         long likedCount = (long)cursor.ExecuteScalar();
 
                         if (likedCount > 0)
@@ -231,7 +231,7 @@ namespace shooter_server
 
                     using (var cursor = dbConnection.CreateCommand())
                     {
-                        cursor.CommandText = $"SELECT COUNT(*) FROM chat_users WHERE idChat = {idChat}";
+                        cursor.CommandText = $"SELECT COUNT(*) FROM chat WHERE id_chat = {idChat}";
                         long likedCount = (long)cursor.ExecuteScalar();
 
                         if (likedCount > 0)
