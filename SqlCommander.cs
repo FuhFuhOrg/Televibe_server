@@ -226,7 +226,7 @@ namespace shooter_server
                 {
                     for (int i = 0; i < 128; ++i)
                     {
-                        idChat += random.Next(10);
+                        idChat += random.Next(10).ToString();
                     }
 
                     using (var cursor = dbConnection.CreateCommand())
