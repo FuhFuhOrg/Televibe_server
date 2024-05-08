@@ -304,11 +304,13 @@ namespace shooter_server
 
                     cursor.Parameters.AddWithValue("idUser", idUser);
                     cursor.Parameters.AddWithValue("idChat", idChat);
-                    cursor.Parameters.AddWithValue("chatPassword", chatPassword);
-                    cursor.Parameters.AddWithValue("isPrivacy", isPrivacy);
 
                     cursor.CommandText = @"INSERT INTO chat_users (id_user, id_chat) VALUES (@idUser, @idChat);";
                     await cursor.ExecuteNonQueryAsync();
+
+                    cursor.Parameters.AddWithValue("idChat", idChat);
+                    cursor.Parameters.AddWithValue("chatPassword", chatPassword);
+                    cursor.Parameters.AddWithValue("isPrivacy", isPrivacy);
 
                     cursor.CommandText = @"INSERT INTO chat (id_chat, chat_password, is_privacy) VALUES (@idChat, @chatPassword, @isPrivacy);";
                     await cursor.ExecuteNonQueryAsync();
