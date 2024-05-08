@@ -224,10 +224,12 @@ namespace shooter_server
 
                 do
                 {
+                    StringBuilder sb = new StringBuilder();
                     for (int i = 0; i < 128; ++i)
                     {
-                        idChat += random.Next(10);
+                        sb.Append(random.Next(10));
                     }
+                    idChat = sb.ToString();
 
                     using (var cursor = dbConnection.CreateCommand())
                     {
@@ -306,8 +308,9 @@ namespace shooter_server
                     cursor.Parameters.AddWithValue("isPrivacy", isPrivacy);
 
                     cursor.CommandText = @"INSERT INTO chat_users (id_user, id_chat) VALUES (@idUser, @idChat);";
-                    cursor.CommandText = @"INSERT INTO chat (id_chat, chat_password, is_privacy) VALUES (@idChat, @chatPassword, @isPrivacy);";
+                    await cursor.ExecuteNonQueryAsync();
 
+                    cursor.CommandText = @"INSERT INTO chat (id_chat, chat_password, is_privacy) VALUES (@idChat, @chatPassword, @isPrivacy);";
                     await cursor.ExecuteNonQueryAsync();
 
                     lobby.SendMessagePlayer(idChat + " " + idUser, ws, requestId);
