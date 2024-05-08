@@ -8,5 +8,10 @@ namespace shooter_server
         public DateTime timeMsg { get; set; }
         public byte[] msg { get; set; }
         public bool isRead {  get; set; }
+
+        public string GetString()
+        {
+            return "";
+        }
     }
 }

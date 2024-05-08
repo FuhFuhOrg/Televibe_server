@@ -23,6 +23,7 @@ namespace shooter_server
             Id = -1;
         }
 
+        // Отправка сообщение клиенту, определенному вебсокету
         public async Task SendMessageAsync(WebSocket webSocket, string message)
         {
             try
