@@ -7,6 +7,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Collections.Specialized;
 using System.Globalization;
 using System.Numerics;
+using System.Diagnostics;
 
 namespace shooter_server
 {
@@ -233,6 +234,7 @@ namespace shooter_server
 
                     using (var cursor = dbConnection.CreateCommand())
                     {
+                        Debug.WriteLine(idChat);
                         cursor.CommandText = $"SELECT COUNT(*) FROM chat WHERE id_chat = {idChat}";
                         long likedCount = (long)cursor.ExecuteScalar();
 
