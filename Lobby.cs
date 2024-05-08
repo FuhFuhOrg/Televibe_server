@@ -10,7 +10,7 @@ namespace shooter_server
 {
     public class Lobby
     {
-        private Dictionary<WebSocket, Player> players = new Dictionary<WebSocket, Player>();
+        private Dictionary<WebSocket, Player> players = new Dictionary<WebSocket, Player>(); // Все пользователи, которые на сервере, подключенные по вебсокету
 
         public SqlCommander SqlCommander = new SqlCommander(
                 "localhost",
@@ -20,8 +20,10 @@ namespace shooter_server
                 5432
             );
 
+        // Можно получить, но нельзя отправить пользователю
         public Dictionary<WebSocket, Player> Players { get => players; }
 
+        // Всем.
         public async void SendMessageAll(string message)
         {
             foreach (var player in Players)
@@ -30,6 +32,7 @@ namespace shooter_server
             }
         }
 
+        // Всем кому не введен вебсокет
         public async void SendMessageExcept(string message, WebSocket ws)
         {
             foreach (var player in Players)
@@ -41,12 +44,13 @@ namespace shooter_server
             }
         }
 
+        // Отправка клиенту, чей вебсокет был введен
         public async void SendMessagePlayer(string message, WebSocket ws, int idRequest)
         {
             await Players[ws].SendMessageAsync(ws, idRequest.ToString() + " " + message);
         }
 
-
+        // 
         public virtual void AddPlayer(WebSocket ws, Player player)
         {
             if (Players.ContainsKey(ws))
@@ -55,6 +59,7 @@ namespace shooter_server
                 Players.Add(ws, player);
         }
 
+        // Удалить плеера из жизни
         public void RemovePlayer(WebSocket ws)
         {
             if (Players.ContainsKey(ws))
