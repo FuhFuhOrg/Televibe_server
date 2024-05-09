@@ -58,7 +58,7 @@ namespace shooter_server
                         case string s when s.StartsWith("ChatCreate"):
                             await Task.Run(() => ChatCreate(sqlCommand, senderId, dbConnection, lobby, webSocket));
                             break;
-                        case string s when s.StartsWith("GetMessage"):
+                        case string s when s.StartsWith("GetMessages"):
                             await Task.Run(() => GetMessages(sqlCommand, senderId, dbConnection, lobby, webSocket));
                             break;
                         case string s when s.StartsWith("RefactorMessage"):
@@ -68,16 +68,16 @@ namespace shooter_server
                             await Task.Run(() => CheckWebSocket(sqlCommand, senderId, dbConnection, lobby, webSocket));
                             break;
                         case string s when s.StartsWith("DeleteMessages"):
-                            await Task.Run(() => DeleteMessages(sqlCommand, senderId, dbConnection, lobby, webSocket));
+                            await Task.Run(() => DeleteMessage(sqlCommand, senderId, dbConnection, lobby, webSocket));
                             break;
-                        case string s when s.StartsWith("RefreshListMessages"):
-                            await Task.Run(() => RefreshListMessages(sqlCommand, senderId, dbConnection, lobby, webSocket));
+                        case string s when s.StartsWith("ReturnLastKMessages"):
+                            await Task.Run(() => ReturnLastKMessages(sqlCommand, senderId, dbConnection, lobby, webSocket));
                             break;
-                        case string s when s.StartsWith("SearchMessage"):
-                            await Task.Run(() => SearchMessageByKeyWord(sqlCommand, senderId, dbConnection, lobby, webSocket));
+                        case string s when s.StartsWith("ReturnMessageByKeyWord"):
+                            await Task.Run(() => ReturnMessageByKeyWord(sqlCommand, senderId, dbConnection, lobby, webSocket));
                             break;
-                        case string s when s.StartsWith("SearchMessage"):
-                            await Task.Run(() => SearchMessageByIdMsg(sqlCommand, senderId, dbConnection, lobby, webSocket));
+                        case string s when s.StartsWith("ReturnMessageByIdMsg"):
+                            await Task.Run(() => ReturnMessageByIdMsg(sqlCommand, senderId, dbConnection, lobby, webSocket));
                             break;
                         default:
                             Console.WriteLine("Command not found");
@@ -92,37 +92,95 @@ namespace shooter_server
         }
 
 
+        // Возврат сообщения по idMsg
+        private async Task ReturnMessageByIdMsg(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
+        {
+            try
+            {
+                using (var cursor = dbConnection.CreateCommand())
+                {
+                    // SearchMessageByIdMsg requestId idMsg
+                    List<string> credentials = new List<string>(sqlCommand.Split(' '));
 
-        //-------------------------------------------------------------------------------------------------------------------------------------------
+                    credentials.RemoveAt(0);
 
-        // ИСПРАВИТЬ ПОИСК СООБЩЕНИЙ, ДОБАВИТЬ SQL-КОМАНДУ
+                    int requestId = int.Parse(credentials[0]);
+                    int idMsg = int.Parse(credentials[1]);
 
-        //-------------------------------------------------------------------------------------------------------------------------------------------
+                    cursor.Parameters.AddWithValue("idMsg", idMsg);
+
+                    cursor.CommandText = @"SELECT * FROM messages WHERE id_msg = @idMsg;";
+
+                    string result = "";
+
+                    using (var reader = await cursor.ExecuteReaderAsync())
+                    {
+                        if (await reader.ReadAsync())
+                        {
+                            Message message = new Message
+                            {
+                                idSender = reader.GetInt32(0),
+                                idMsg = reader.GetInt32(1),
+                                timeMsg = reader.GetDateTime(2),
+                                msg = reader.GetFieldValue<byte[]>(3)
+                            };
+
+                            result += message.GetString();
+                        }
+                    }
+
+                    lobby.SendMessagePlayer($"/ans {result}", ws, requestId);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error RefactorMessage command: {e}");
+            }
+        }
 
 
-        // SearchMessage idSender idRecepient idMsg 
-        private async Task SearchMessageByIdMsg(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
+        // Поиск сообщения по ключу в msg
+        private async Task ReturnMessageByKeyWord(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
             using (var cursor = dbConnection.CreateCommand())
             {
                 try
                 {
+                    // SearchMessage idSender msg
                     List<string> credentials = new List<string>(sqlCommand.Split(' '));
 
                     credentials.RemoveAt(0);
 
                     int requestId = int.Parse(credentials[0]);
                     int idSender = int.Parse(credentials[1]);
-                    int idRecepient = int.Parse(credentials[2]);
-                    byte[] msg = Encoding.UTF8.GetBytes(credentials[3]);
+                    byte[] msg = Encoding.UTF8.GetBytes(credentials[2]);
 
-                    cursor.CommandText = @"UPDATE chat_users SET msg = @msg WHERE idMsg = @idMsg;";
-
-                    cursor.Parameters.AddWithValue("idMsg", idSender);
-                    cursor.Parameters.AddWithValue("msg", idRecepient);
+                    cursor.Parameters.AddWithValue("idSender", idSender);
                     cursor.Parameters.AddWithValue("msg", msg);
 
-                    await cursor.ExecuteNonQueryAsync();
+                    cursor.CommandText = @"SELECT * FROM messages
+                      WHERE (id_sender = @idSender AND msg LIKE '%' || @msg || '%')
+                      ORDER BY id_msg DESC;";
+
+                    string result = "";
+
+                    using (var reader = await cursor.ExecuteReaderAsync())
+                    {
+                        if (await reader.ReadAsync())
+                        {
+                            Message message = new Message
+                            {
+                                idSender = reader.GetInt32(0),
+                                idMsg = reader.GetInt32(1),
+                                timeMsg = reader.GetDateTime(2),
+                                msg = reader.GetFieldValue<byte[]>(3)
+                            };
+
+                            result += message.GetString();
+                        }
+                    }
+
+                    lobby.SendMessagePlayer($"/ans {result}", ws, requestId);
                 }
                 catch (Exception e)
                 {
@@ -132,47 +190,6 @@ namespace shooter_server
         }
 
 
-        // SearchMessage idSender idRecepient msg 
-        private async Task SearchMessageByKeyWord(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
-        {
-            using (var cursor = dbConnection.CreateCommand())
-            {
-                try
-                {
-                    List<string> credentials = new List<string>(sqlCommand.Split(' '));
-
-                    credentials.RemoveAt(0);
-
-                    int requestId = int.Parse(credentials[0]);
-                    int idSender = int.Parse(credentials[1]);
-                    int idRecepient = int.Parse(credentials[2]);
-                    byte[] msg = Encoding.UTF8.GetBytes(credentials[3]);
-
-                    cursor.CommandText = @"UPDATE chat_users SET msg = @msg WHERE idMsg = @idMsg;";
-
-                    cursor.Parameters.AddWithValue("idMsg", idSender);
-                    cursor.Parameters.AddWithValue("msg", idRecepient);
-                    cursor.Parameters.AddWithValue("msg", msg);
-
-                    await cursor.ExecuteNonQueryAsync();
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine($"Error RefactorMessage command: {e}");
-                }
-            }
-        }
-
-
-        //-------------------------------------------------------------------------------------------------------------------------------------------
-
-        // ИСПРАВИТЬ ПОИСК СООБЩЕНИЙ, ДОБАВИТЬ SQL-КОМАНДУ
-
-        //-------------------------------------------------------------------------------------------------------------------------------------------
-
-
-
-        // GenerateUniqueUserId
         private int GenerateUniqueUserId(NpgsqlConnection dbConnection)
         {
             try
@@ -211,7 +228,6 @@ namespace shooter_server
         }
 
 
-        // GenerateUniqueChatId
         private string GenerateUniqueChatId(NpgsqlConnection dbConnection)
         {
             try
@@ -257,40 +273,15 @@ namespace shooter_server
             }
         }
 
-        // RegistrationUser
-        private async Task RegistrationUser(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
+
+        // Создание нового чата
+        private async Task ChatCreate(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
             try
             {
                 using (var cursor = dbConnection.CreateCommand())
                 {
-                    List<string> credentials = new List<string>(sqlCommand.Split(' '));
-
-                    credentials.RemoveAt(0);
-
-                    int requestId = int.Parse(credentials[0]);
-
-                    int idSender = GenerateUniqueUserId(dbConnection);
-
-                    cursor.Parameters.AddWithValue("idUser", idSender);
-                    cursor.CommandText = @"INSERT INTO users (id_sender) VALUES (@idSender);";
-                    await cursor.ExecuteNonQueryAsync();
-                }    
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"Error RegistrationUser command: {e}");
-            }
-        }
-
-
-        // ChatCreate requestId chatPassword isPrivacy
-        private async Task ChatCreate(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
-        {
-            using (var cursor = dbConnection.CreateCommand())
-            {
-                try
-                {
+                    // ChatCreate requestId chatPassword isPrivacy
                     List<string> credentials = new List<string>(sqlCommand.Split(' '));
 
                     credentials.RemoveAt(0);
@@ -299,16 +290,13 @@ namespace shooter_server
                     string chatPassword = credentials[1];
                     bool isPrivacy = bool.Parse(credentials[2]);
 
-                    // ----------------------------------------------------
                     int idUser = GenerateUniqueUserId(dbConnection);
-                    // ----------------------------------------------------
-
                     string idChat = GenerateUniqueChatId(dbConnection);
 
                     cursor.Parameters.AddWithValue("idUser", idUser);
                     cursor.Parameters.AddWithValue("idChat", idChat);
 
-                    cursor.CommandText = @"INSERT INTO chat_users (id_user, id_chat) VALUES (@idUser, @idChat);";
+                    cursor.CommandText = @"INSERT INTO users (id_user, id_chat) VALUES (@idUser, @idChat);";
                     await cursor.ExecuteNonQueryAsync();
 
                     cursor.Parameters.AddWithValue("idChat", idChat);
@@ -320,21 +308,22 @@ namespace shooter_server
 
                     lobby.SendMessagePlayer(idChat + " " + idUser, ws, requestId);
                 }
-                catch (Exception e)
-                {
-                    Console.WriteLine($"Error ChatCreate command: {e}");
-                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error ChatCreate command: {e}");
             }
         }
 
 
-        // RefactorMessage idMsg msg
+        // Изменение сообщения
         private async Task RefactorMessage(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
-            using (var cursor = dbConnection.CreateCommand())
+            try
             {
-                try
+                using (var cursor = dbConnection.CreateCommand())
                 {
+                    // RefactorMessage requestId idMsg msg
                     List<string> credentials = new List<string>(sqlCommand.Split(' '));
 
                     credentials.RemoveAt(0);
@@ -343,45 +332,29 @@ namespace shooter_server
                     int idMsg = int.Parse(credentials[1]);
                     byte[] msg = Encoding.UTF8.GetBytes(credentials[2]);
 
-                    cursor.CommandText = @"UPDATE chat_users SET msg = @msg WHERE idMsg = @idMsg;";
-
                     cursor.Parameters.AddWithValue("idMsg", idMsg);
                     cursor.Parameters.AddWithValue("msg", msg);
 
+                    cursor.CommandText = @"UPDATE messages SET msg = @msg WHERE id_msg = @idMsg;";
+
                     await cursor.ExecuteNonQueryAsync();
 
-                    // "senderId  "
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine($"Error RefactorMessage command: {e}");
+                    lobby.SendMessagePlayer($"/ans true", ws, requestId);
                 }
             }
-        }
-
-
-        // Возвращать idUser
-        private async Task ChatConnect(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
-        {
-            using (var cursor = dbConnection.CreateCommand())
+            catch (Exception e)
             {
-                try
-                {
-
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine($"Error ChatConnect command: {e}");
-                }
+                Console.WriteLine($"Error RefactorMessage command: {e}");
             }
         }
 
 
-        // CheckWebSocket requestId
+        // Проверка вебсокета
         private void CheckWebSocket(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
             try
             {
+                // CheckWebSocket requestId
                 List<string> credentials = new List<string>(sqlCommand.Split(' '));
 
                 credentials.RemoveAt(0);
@@ -392,11 +365,13 @@ namespace shooter_server
                 {
                     Console.WriteLine("WebSocket is open");
 
-                    //lobby.SendMessagePlayer();
+                    lobby.SendMessagePlayer($"/ans true", ws, requestId);
                 }
                 else
                 {
                     Console.WriteLine("WebSocket is closed");
+
+                    lobby.SendMessagePlayer($"/ans false", ws, requestId);
                 }
             }
             catch (Exception e)
@@ -406,59 +381,64 @@ namespace shooter_server
         }
 
 
-        // DeleteMessages requestId idMsg
-        private async Task DeleteMessages(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
+        // Удаление сообщения
+        private async Task DeleteMessage(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
-            using (var cursor = dbConnection.CreateCommand())
+            try
             {
-                try
+                using (var cursor = dbConnection.CreateCommand())
                 {
-                    List<string> credentials = new List<string>(sqlCommand.Split(' '));
-
-                    credentials.RemoveAt(0);
-
-                    int requestId = int.Parse(credentials[0]);
-                    int idMsg = int.Parse(credentials[1]);
-
-                    cursor.CommandText = @"DELETE FROM chat_users WHERE idMsg = @idMsg;";
-                    cursor.Parameters.AddWithValue("idMsg", idMsg);
-
-                    await cursor.ExecuteNonQueryAsync();
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine($"Error DeleteMessages command: {e}");
-                }
-            }
-        }
-
-
-        // RefreshListMessages requestId idRecepient kMessages
-        private async Task<List<Message>> RefreshListMessages(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
-        {
-            List<Message> messages = new List<Message>();
-
-            using (var cursor = dbConnection.CreateCommand())
-            {
-                try
-                {
+                    // DeleteMessages requestId idSender idMsg
                     List<string> credentials = new List<string>(sqlCommand.Split(' '));
 
                     credentials.RemoveAt(0);
 
                     int requestId = int.Parse(credentials[0]);
                     int idSender = int.Parse(credentials[1]);
-                    int idRecepient = int.Parse(credentials[2]);
-                    int kMessages = int.Parse(credentials[3]);
+                    int idMsg = int.Parse(credentials[2]);
 
-                    // Запрос на последние kMessages непрочитанных сообщений
-                    cursor.CommandText = @"SELECT * FROM chat_users
-                                    WHERE idRecepient = @idRecepient AND isRead = false
-                                    ORDER BY timeMsg DESC
+                    cursor.Parameters.AddWithValue("idMsg", idMsg);
+                    cursor.Parameters.AddWithValue("id_sender", idSender);
+
+                    cursor.CommandText = @"DELETE FROM messages WHERE (idMsg = @idMsg AND id_sender = @idSender);";
+
+                    await cursor.ExecuteNonQueryAsync();
+
+                    lobby.SendMessagePlayer($"/ans true", ws, requestId);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error DeleteMessages command: {e}");
+            }
+        }
+        
+
+        // Возврат k сообщений, отсортированных по времени
+        private async Task ReturnLastKMessages(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
+        {
+            try
+            {
+                using (var cursor = dbConnection.CreateCommand())
+                {
+                    // RefreshListMessages requestId idSender kMessages
+                    List<string> credentials = new List<string>(sqlCommand.Split(' '));
+
+                    credentials.RemoveAt(0);
+
+                    int requestId = int.Parse(credentials[0]);
+                    int idSender = int.Parse(credentials[1]);
+                    int kMessages = int.Parse(credentials[2]);
+
+                    cursor.Parameters.AddWithValue("idSender", idSender);
+                    cursor.Parameters.AddWithValue("kMessages", kMessages);
+
+                    cursor.CommandText = @"SELECT * FROM messages
+                                    WHERE id_sender = @idSender
+                                    ORDER BY time_msg DESC
                                     LIMIT @kMessages;";
 
-                    cursor.Parameters.AddWithValue("idRecepient", idRecepient);
-                    cursor.Parameters.AddWithValue("kMessages", kMessages);
+                    string result = "";
 
                     using (var reader = await cursor.ExecuteReaderAsync())
                     {
@@ -472,28 +452,26 @@ namespace shooter_server
                                 msg = reader.GetFieldValue<byte[]>(3),
                             };
 
-                            messages.Add(message);
+                            result += message.GetString();
                         }
                     }
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine($"Error RefreshListMessages command: {e}");
+
+                    lobby.SendMessagePlayer($"/ans {result}", ws, requestId);
                 }
             }
-
-            return messages;
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error RefreshListMessages command: {e}");
+            }
         }
 
 
-        // Готово
+        // Вернуть сообщения, которые больше id_msg
         private async Task GetMessages(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
-            List<Message> messages = new List<Message>();
-
-            using (var cursor = dbConnection.CreateCommand())
+            try
             {
-                try
+                using (var cursor = dbConnection.CreateCommand())
                 {
                     // GetMessages requestId idSender idMsg
                     List<string> credentials = new List<string>(sqlCommand.Split(' '));
@@ -532,15 +510,15 @@ namespace shooter_server
                     // Возвращает строку типа: idSender idMsg timeMsg msg 
                     lobby.SendMessagePlayer($"/ans {result}", ws, requestId);
                 }
-                catch (Exception e)
-                {
-                    Console.WriteLine($"Error GetMessages command: {e}");
-                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error GetMessages command: {e}");
             }
         }
 
 
-        // Готово
+        // Отправить сообщение
         private async Task SendMessage(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
             try

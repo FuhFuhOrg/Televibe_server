@@ -7,6 +7,11 @@ namespace shooter_server
         public DateTime timeMsg { get; set; }
         public byte[] msg { get; set; }
 
+        public Message()
+        {
+            msg = new byte[0];
+        }
+
         public string GetString()
         {
             return idSender.ToString() + " " + idMsg.ToString() + " " + timeMsg.ToString() + " " + msg.ToString() + " ";
