@@ -290,20 +290,38 @@ namespace shooter_server
                     string chatPassword = credentials[1];
                     bool isPrivacy = bool.Parse(credentials[2]);
 
-                    int idUser = GenerateUniqueUserId(dbConnection);
                     string idChat = GenerateUniqueChatId(dbConnection);
-
-                    cursor.Parameters.AddWithValue("idUser", idUser);
-                    cursor.Parameters.AddWithValue("idChat", idChat);
-
-                    cursor.CommandText = @"INSERT INTO users (id_user, id_chat) VALUES (@idUser, @idChat);";
-                    await cursor.ExecuteNonQueryAsync();
 
                     cursor.Parameters.AddWithValue("idChat", idChat);
                     cursor.Parameters.AddWithValue("chatPassword", chatPassword);
                     cursor.Parameters.AddWithValue("isPrivacy", isPrivacy);
 
                     cursor.CommandText = @"INSERT INTO chat (id_chat, chat_password, is_privacy) VALUES (@idChat, @chatPassword, @isPrivacy);";
+                    await cursor.ExecuteNonQueryAsync();
+
+                    await UserCreate(sqlCommand, senderId, dbConnection, lobby, ws, requestId, idChat);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error ChatCreate command: {e}");
+            }
+        }
+
+
+        // Создание нового юзера
+        private async Task UserCreate(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws, int requestId, string idChat)
+        {
+            try
+            {
+                using (var cursor = dbConnection.CreateCommand())
+                {
+                    int idUser = GenerateUniqueUserId(dbConnection);
+
+                    cursor.Parameters.AddWithValue("idUser", idUser);
+                    cursor.Parameters.AddWithValue("idChat", idChat);
+
+                    cursor.CommandText = @"INSERT INTO users (id_user, id_chat) VALUES (@idUser, @idChat);";
                     await cursor.ExecuteNonQueryAsync();
 
                     lobby.SendMessagePlayer(idChat + " " + idUser, ws, requestId);
