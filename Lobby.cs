@@ -10,7 +10,8 @@ namespace shooter_server
 {
     public class Lobby
     {
-        private Dictionary<WebSocket, Player> players = new Dictionary<WebSocket, Player>(); // Все пользователи, которые на сервере, подключенные по вебсокету
+        // Все пользователи, которые на сервере, подключенные по вебсокету
+        private Dictionary<WebSocket, Player> players = new Dictionary<WebSocket, Player>();
 
         public SqlCommander SqlCommander = new SqlCommander(
                 "localhost",
