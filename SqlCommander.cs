@@ -533,10 +533,10 @@ namespace shooter_server
                                 Console.WriteLine(userId.ToString() + " " + msss.ToString());
                                 cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = @idSender AND id_msg = @messageId ORDER BY id_msg ASC";
 
-                                using (var reader = await cursor.ExecuteReaderAsync())
+                                using (NpgsqlDataReader reader = await cursor.ExecuteReaderAsync())
                                 {
                                     Console.WriteLine(reader.ToString());
-                                    if (await reader.ReadAsync())
+                                    while (await reader.ReadAsync())
                                     {
                                         Message message = new Message
                                         {
@@ -548,10 +548,6 @@ namespace shooter_server
 
                                         Console.WriteLine(message.ToString());
                                         messages.Add(message);
-                                    }
-                                    else
-                                    {
-                                        //Console.WriteLine("No row is available.");
                                     }
                                 }
 
@@ -567,10 +563,10 @@ namespace shooter_server
                             Console.WriteLine(userId.ToString() + " " + idMsg.ToString());
                             cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = @idSender AND id_msg >= @messageId ORDER BY id_msg ASC";
 
-                            using (var reader = await cursor.ExecuteReaderAsync())
+                            using (NpgsqlDataReader reader = await cursor.ExecuteReaderAsync())
                             {
                                 Console.WriteLine(reader.ToString());
-                                if (reader.Read())
+                                while (await reader.ReadAsync())
                                 {
                                     Message message = new Message
                                     {
@@ -582,10 +578,6 @@ namespace shooter_server
 
                                     Console.WriteLine(message.ToString());
                                     messages.Add(message);
-                                }
-                                else
-                                {
-                                    //Console.WriteLine("No row is available.");
                                 }
                             }
                         }
