@@ -549,7 +549,7 @@ namespace shooter_server
                                     }
                                     else
                                     {
-                                        Console.WriteLine("No row is available.");
+                                        //Console.WriteLine("No row is available.");
                                     }
                                 }
 
@@ -581,7 +581,7 @@ namespace shooter_server
                                 }
                                 else
                                 {
-                                    Console.WriteLine("No row is available.");
+                                    //Console.WriteLine("No row is available.");
                                 }
                             }
                         }
