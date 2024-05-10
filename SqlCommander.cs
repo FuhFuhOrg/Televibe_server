@@ -574,8 +574,8 @@ namespace shooter_server
 
 
                     // Добавление параметров в команду для предотвращения SQL-инъекций
-                    cursor.Parameters.AddWithValue("id_sender", idSender);
-                    cursor.Parameters.AddWithValue("time_msg", timeMsg);
+                    cursor.Parameters.AddWithValue("idSender", idSender);
+                    cursor.Parameters.AddWithValue("timeMsg", timeMsg);
                     cursor.Parameters.AddWithValue("msg", msg);
                     cursor.Parameters.AddWithValue("idMsg", idMsg);
 
