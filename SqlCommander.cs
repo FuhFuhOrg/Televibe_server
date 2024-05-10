@@ -508,14 +508,18 @@ namespace shooter_server
                     int kek = 2;
                     for (int k = 0; k < kChats; k++)
                     {
+                        Console.WriteLine(credentials[kek]);
                         string chatId = credentials[kek];
                         kek++;
+                        Console.WriteLine(credentials[kek]);
                         long kSender = long.Parse(credentials[kek]);
                         kek++;
                         for (int i = 0; i < kSender; i++)
                         {
+                            Console.WriteLine(credentials[kek]);
                             long userId = long.Parse(credentials[kek]);
                             kek++;
+                            Console.WriteLine(credentials[kek]);
                             long kMsg = long.Parse(credentials[kek]);
                             kek++;
                             for (int j = 0; j < kMsg - 1; ++j)
