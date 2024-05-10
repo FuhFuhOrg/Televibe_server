@@ -535,7 +535,7 @@ namespace shooter_server
                         }
 
                         long idMsg = long.Parse(credentials[kek]);
-                        kek++
+                        kek++;
                         // Все айдишники после последнего, включая последнего
                         cursor.Parameters.AddWithValue("idSender", senderId);
                         cursor.Parameters.AddWithValue("messageId", idMsg);
