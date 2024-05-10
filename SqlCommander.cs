@@ -505,10 +505,11 @@ namespace shooter_server
 
                     int requestId = int.Parse(credentials[0]);
                     long kChats = long.Parse(credentials[1]);
-                    string chatId = credentials[2];
-                    int kek = 3;
+                    int kek = 2;
                     for (int k = 0; k < kChats; k++)
                     {
+                        string chatId = credentials[kek];
+                        kek++;
                         long kSender = long.Parse(credentials[kek]);
                         kek++;
                         for (int i = 0; i < kSender; i++)
