@@ -532,17 +532,18 @@ namespace shooter_server
 
                             using (var reader = await cursor.ExecuteReaderAsync())
                             {
-                                await reader.ReadAsync();
-
-                                Message message = new Message
+                                while (await reader.ReadAsync())
                                 {
-                                    id_sender = reader.GetInt32(0),
-                                    id_msg = reader.GetInt32(1),
-                                    time_msg = reader.GetDateTime(2),
-                                    msg = reader.GetFieldValue<byte[]>(3),
-                                };
+                                    Message message = new Message
+                                    {
+                                        id_sender = reader.GetInt32(0),
+                                        id_msg = reader.GetInt32(1),
+                                        time_msg = reader.GetDateTime(2),
+                                        msg = reader.GetFieldValue<byte[]>(3),
+                                    };
 
-                                messages.Add(message);
+                                    messages.Add(message);
+                                }
                             }
                         }
 
