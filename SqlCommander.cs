@@ -561,7 +561,7 @@ namespace shooter_server
                             cursor.Parameters.AddWithValue("messageId", idMsg);
 
                             Console.WriteLine(userId.ToString() + " " + idMsg.ToString());
-                            cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = @idSender AND id_msg >= @messageId ORDER BY id_msg ASC";
+                            cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = -81434167 AND id_msg >= 0 ORDER BY id_msg ASC";
 
                             using (NpgsqlDataReader reader = await cursor.ExecuteReaderAsync())
                             {
