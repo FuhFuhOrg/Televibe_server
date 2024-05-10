@@ -501,24 +501,26 @@ namespace shooter_server
 
                     credentials.RemoveAt(0);
 
+                    List<Message> messages = new List<Message>();
+
                     int requestId = int.Parse(credentials[0]);
                     long kSenderId = long.Parse(credentials[1]);
-                    long kek = 2;
+                    int kek = 2;
                     for (int i = 0; i < kSenderId; i++){
-                        long senderId = long.Parse(credentials[kek]);
+                        long userId = long.Parse(credentials[kek]);
                         kek++;
                         long kIdMsg = long.Parse(credentials[kek]);
                         kek++;
                         for (int j = 0; j < kIdMsg - 1; ++j)
                         {
-                            long idMsg = long.Parse(credentials[kek]);
+                            long msss = long.Parse(credentials[kek]);
                             kek++;
-                            cursor.Parameters.AddWithValue("idSender", senderId);
-                            cursor.Parameters.AddWithValue("messageId", idMsg);
+                            cursor.Parameters.AddWithValue("idSender", userId);
+                            cursor.Parameters.AddWithValue("messageId", msss);
 
                             cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = @idSender AND id_msg = @messageId ORDER BY id_msg ASC";
 
-                            using (var reader = await cursor.ExecuteReaderAsync());
+                            using (var reader = await cursor.ExecuteReaderAsync())
                             {
                                 await reader.ReadAsync();
 
