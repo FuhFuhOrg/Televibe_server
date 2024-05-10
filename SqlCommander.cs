@@ -518,6 +518,7 @@ namespace shooter_server
                             cursor.Parameters.AddWithValue("idSender", userId);
                             cursor.Parameters.AddWithValue("messageId", msss);
 
+                            Console.WriteLine(userId + " " + msss);
                             cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = @idSender AND id_msg = @messageId ORDER BY id_msg ASC";
 
                             using (var reader = await cursor.ExecuteReaderAsync())
@@ -545,7 +546,7 @@ namespace shooter_server
                         long idMsg = long.Parse(credentials[kek]);
                         kek++;
                         // Все айдишники после последнего, включая последнего
-                        cursor.Parameters.AddWithValue("idSender", senderId);
+                        cursor.Parameters.AddWithValue("idSender", userId);
                         cursor.Parameters.AddWithValue("messageId", idMsg);
 
                         Console.WriteLine(senderId + " " + idMsg);
@@ -553,7 +554,7 @@ namespace shooter_server
 
                         using (var reader = await cursor.ExecuteReaderAsync())
                         {
-                            while (await reader.ReadAsync())
+                            if (await reader.ReadAsync())
                             {
                                 Message message = new Message
                                 {
@@ -564,6 +565,10 @@ namespace shooter_server
                                 };
 
                                 messages.Add(message);
+                            }
+                            else
+                            {
+                                Console.WriteLine("No row is available.");
                             }
                         }
                     }
