@@ -557,10 +557,6 @@ namespace shooter_server
         }
 
 
-
-
-
-
         // Отправить сообщение +
         private async Task SendMessage(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
@@ -591,7 +587,6 @@ namespace shooter_server
                     cursor.CommandText = "SELECT COUNT(*) FROM messages WHERE id_sender = @idSender";
                     cursor.Parameters.AddWithValue("id_sender", idSender);
                     long idMsg = (long)await cursor.ExecuteScalarAsync();
-
 
 
                     // Добавление параметров в команду для предотвращения SQL-инъекций
