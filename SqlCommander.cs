@@ -504,22 +504,59 @@ namespace shooter_server
                     List<Message> messages = new List<Message>();
 
                     int requestId = int.Parse(credentials[0]);
-                    long kSenderId = long.Parse(credentials[1]);
-                    int kek = 2;
-                    for (int i = 0; i < kSenderId; i++){
-                        long userId = long.Parse(credentials[kek]);
+                    long kChats = long.Parse(credentials[1]);
+                    string chatId = credentials[2];
+                    int kek = 3;
+                    for (int k = 0; k < kChats; k++)
+                    {
+                        long kSender = long.Parse(credentials[kek]);
                         kek++;
-                        long kIdMsg = long.Parse(credentials[kek]);
-                        kek++;
-                        for (int j = 0; j < kIdMsg - 1; ++j)
+                        for (int i = 0; i < kSender; i++)
                         {
-                            long msss = long.Parse(credentials[kek]);
+                            long userId = long.Parse(credentials[kek]);
                             kek++;
-                            cursor.Parameters.AddWithValue("idSender", userId);
-                            cursor.Parameters.AddWithValue("messageId", msss);
+                            long kMsg = long.Parse(credentials[kek]);
+                            kek++;
+                            for (int j = 0; j < kMsg - 1; ++j)
+                            {
+                                long msss = long.Parse(credentials[kek]);
+                                kek++;
+                                cursor.Parameters.AddWithValue("idSender", userId);
+                                cursor.Parameters.AddWithValue("messageId", msss);
 
-                            Console.WriteLine(userId + " " + msss);
-                            cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = @idSender AND id_msg = @messageId ORDER BY id_msg ASC";
+                                Console.WriteLine(userId + " " + msss);
+                                cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = @idSender AND id_msg = @messageId ORDER BY id_msg ASC";
+
+                                using (var reader = await cursor.ExecuteReaderAsync())
+                                {
+                                    if (await reader.ReadAsync())
+                                    {
+                                        Message message = new Message
+                                        {
+                                            id_sender = reader.GetInt32(0),
+                                            id_msg = reader.GetInt32(1),
+                                            time_msg = reader.GetDateTime(2),
+                                            msg = reader.GetFieldValue<byte[]>(3),
+                                        };
+
+                                        messages.Add(message);
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine("No row is available.");
+                                    }
+                                }
+
+                            }
+
+                            long idMsg = long.Parse(credentials[kek]);
+                            kek++;
+                            // Все айдишники после последнего, включая последнего
+                            cursor.Parameters.AddWithValue("idSender", userId);
+                            cursor.Parameters.AddWithValue("messageId", idMsg);
+
+                            Console.WriteLine(senderId + " " + idMsg);
+                            cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = @idSender AND id_msg >= @messageId ORDER BY id_msg ASC";
 
                             using (var reader = await cursor.ExecuteReaderAsync())
                             {
@@ -539,36 +576,6 @@ namespace shooter_server
                                 {
                                     Console.WriteLine("No row is available.");
                                 }
-                            }
-
-                        }
-
-                        long idMsg = long.Parse(credentials[kek]);
-                        kek++;
-                        // Все айдишники после последнего, включая последнего
-                        cursor.Parameters.AddWithValue("idSender", userId);
-                        cursor.Parameters.AddWithValue("messageId", idMsg);
-
-                        Console.WriteLine(senderId + " " + idMsg);
-                        cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = @idSender AND id_msg >= @messageId ORDER BY id_msg ASC";
-
-                        using (var reader = await cursor.ExecuteReaderAsync())
-                        {
-                            if (await reader.ReadAsync())
-                            {
-                                Message message = new Message
-                                {
-                                    id_sender = reader.GetInt32(0),
-                                    id_msg = reader.GetInt32(1),
-                                    time_msg = reader.GetDateTime(2),
-                                    msg = reader.GetFieldValue<byte[]>(3),
-                                };
-
-                                messages.Add(message);
-                            }
-                            else
-                            {
-                                Console.WriteLine("No row is available.");
                             }
                         }
                     }
