@@ -503,30 +503,18 @@ namespace shooter_server
 
                     int requestId = int.Parse(credentials[0]);
                     long kSenderId = long.Parse(credentials[1]);
-                    long kIdMsg = long.Parse(credentials[2 + (int)kSenderId]);
-
-                    List<long> senderIds = new List<long>();
-                    List<long> messageIds = new List<long>();
-
-                    for (int i = 0; i < kSenderId; i++)
-                    {
-                        senderIds.Add(long.Parse(credentials[2 + i]));
-                    }
-
-                    for (int i = 0; i < kIdMsg; i++)
-                    {
-                        messageIds.Add(long.Parse(credentials[2 + (int)kSenderId + i]));
-                    }
-
-                    List<Message> messages = new List<Message>();
-
-                    for (int i = 0; i < kSenderId; ++i)
-                    {
-                        // Все айдишники кроме последнего
+                    kek = 2
+                    for (int i = 0; i < kSenderId; i++){
+                        long senderId = long.Parse(credentials[kek]);
+                        kek++;
+                        long kIdMsg = long.Parse(credentials[kek]);
+                        kek++
                         for (int j = 0; j < kIdMsg - 1; ++j)
                         {
-                            cursor.Parameters.AddWithValue("idSender", senderIds[i]);
-                            cursor.Parameters.AddWithValue("messageId", messageIds[j]);
+                            long idMsg = long.Parse(credentials[kek]);
+                            kek++
+                            cursor.Parameters.AddWithValue("idSender", senderId);
+                            cursor.Parameters.AddWithValue("messageId", idMsg);
 
                             cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = @idSender AND id_msg = @messageId ORDER BY id_msg ASC";
 
@@ -546,9 +534,11 @@ namespace shooter_server
                             }
                         }
 
+                        long idMsg = long.Parse(credentials[kek]);
+                        kek++
                         // Все айдишники после последнего, включая последнего
-                        cursor.Parameters.AddWithValue("idSender", senderIds[i]);
-                        cursor.Parameters.AddWithValue("messageId", messageIds[(int)kIdMsg - 1]);
+                        cursor.Parameters.AddWithValue("idSender", senderId);
+                        cursor.Parameters.AddWithValue("messageId", idMsg);
 
                         cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = @idSender AND id_msg >= @messageId ORDER BY id_msg ASC";
 
