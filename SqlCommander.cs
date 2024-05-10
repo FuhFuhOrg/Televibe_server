@@ -503,19 +503,19 @@ namespace shooter_server
 
                     int requestId = int.Parse(credentials[0]);
                     long kSenderId = long.Parse(credentials[1]);
-                    int kIdMsg = int.Parse(credentials[2 + (int)kSenderId]);
+                    long kIdMsg = long.Parse(credentials[2 + (int)kSenderId]);
 
-                    List<int> senderIds = new List<int>();
+                    List<long> senderIds = new List<long>();
                     List<long> messageIds = new List<long>();
 
                     for (int i = 0; i < kSenderId; i++)
                     {
-                        senderIds.Add(int.Parse(credentials[2 + i]));
+                        senderIds.Add(long.Parse(credentials[2 + i]));
                     }
 
                     for (int i = 0; i < kIdMsg; i++)
                     {
-                        messageIds.Add(int.Parse(credentials[2 + (int)kSenderId + i]));
+                        messageIds.Add(long.Parse(credentials[2 + (int)kSenderId + i]));
                     }
 
                     List<Message> messages = new List<Message>();
@@ -532,18 +532,17 @@ namespace shooter_server
 
                             using (var reader = await cursor.ExecuteReaderAsync())
                             {
-                                while (await reader.ReadAsync())
-                                {
-                                    Message message = new Message
-                                    {
-                                        id_sender = reader.GetInt32(0),
-                                        id_msg = reader.GetInt32(1),
-                                        time_msg = reader.GetDateTime(2),
-                                        msg = reader.GetFieldValue<byte[]>(3),
-                                    };
+                                await reader.ReadAsync();
 
-                                    messages.Add(message);
-                                }
+                                Message message = new Message
+                                {
+                                    id_sender = reader.GetInt32(0),
+                                    id_msg = reader.GetInt32(1),
+                                    time_msg = reader.GetDateTime(2),
+                                    msg = reader.GetFieldValue<byte[]>(3),
+                                };
+
+                                messages.Add(message);
                             }
                         }
 
