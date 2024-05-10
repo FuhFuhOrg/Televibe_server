@@ -515,13 +515,13 @@ namespace shooter_server
                     // Parsing senderId
                     for (int i = 0; i < kSenderId; i++)
                     {
-                        senderIds.Add(int.Parse(credentials[3 + i]));
+                        senderIds.Add(int.Parse(credentials[2 + i]));
                     }
 
                     // Parsing idMsg
                     for (int i = 0; i < kIdMsg; i++)
                     {
-                        messageIds.Add(int.Parse(credentials[3 + kSenderId + i]));
+                        messageIds.Add(int.Parse(credentials[2 + kSenderId + i]));
                     }
 
                     // Создаем список для сообщений
