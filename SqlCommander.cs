@@ -503,22 +503,22 @@ namespace shooter_server
 
                     int requestId = int.Parse(credentials[0]);
                     long kSenderId = long.Parse(credentials[1]);
-                    kek = 2
+                    kek = 2;
                     for (int i = 0; i < kSenderId; i++){
                         long senderId = long.Parse(credentials[kek]);
                         kek++;
                         long kIdMsg = long.Parse(credentials[kek]);
-                        kek++
+                        kek++;
                         for (int j = 0; j < kIdMsg - 1; ++j)
                         {
                             long idMsg = long.Parse(credentials[kek]);
-                            kek++
+                            kek++;
                             cursor.Parameters.AddWithValue("idSender", senderId);
                             cursor.Parameters.AddWithValue("messageId", idMsg);
 
                             cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = @idSender AND id_msg = @messageId ORDER BY id_msg ASC";
 
-                            using (var reader = await cursor.ExecuteReaderAsync())
+                            using (var reader = await cursor.ExecuteReaderAsync());
                             {
                                 await reader.ReadAsync();
 
