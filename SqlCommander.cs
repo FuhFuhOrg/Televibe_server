@@ -530,8 +530,8 @@ namespace shooter_server
                                 cursor.Parameters.AddWithValue("idSender", userId);
                                 cursor.Parameters.AddWithValue("messageId", msss);
 
-                                Console.WriteLine(userId.ToString() + " " + msss.ToString());
-                                cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = @idSender AND id_msg = @messageId ORDER BY id_msg ASC";
+                                //Console.WriteLine(userId.ToString() + " " + msss.ToString());
+                                cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = {userId} AND id_msg >= {idMsg} ORDER BY id_msg ASC";
 
                                 using (NpgsqlDataReader reader = await cursor.ExecuteReaderAsync())
                                 {
@@ -560,8 +560,8 @@ namespace shooter_server
                             cursor.Parameters.AddWithValue("idSender", userId);
                             cursor.Parameters.AddWithValue("messageId", idMsg);
 
-                            Console.WriteLine(userId.ToString() + " " + idMsg.ToString());
-                            cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = -81434167 AND id_msg >= 0 ORDER BY id_msg ASC";
+                            //Console.WriteLine(userId.ToString() + " " + idMsg.ToString());
+                            cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = {userId} AND id_msg >= {idMsg} ORDER BY id_msg ASC";
 
                             using (NpgsqlDataReader reader = await cursor.ExecuteReaderAsync())
                             {
@@ -576,7 +576,7 @@ namespace shooter_server
                                         msg = reader.GetFieldValue<byte[]>(3),
                                     };
 
-                                    Console.WriteLine(message.ToString());
+                                    //Console.WriteLine(message.ToString());
                                     messages.Add(message);
                                 }
                             }
