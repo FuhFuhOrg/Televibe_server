@@ -498,15 +498,30 @@ namespace shooter_server
                     credentials.RemoveAt(0);
 
                     int requestId = int.Parse(credentials[0]);
-                    int idSender = int.Parse(credentials[1]);
-                    int idMsg = int.Parse(credentials[2]);
+                    int maxxxk = int.Parse(credentials[1]);
 
-                    cursor.Parameters.AddWithValue("id_sender", idSender);
-                    cursor.Parameters.AddWithValue("id_msg", idMsg);
+                    // Создаем словарь для хранения последнего idMsg для каждого idSender
+                    Dictionary<int, int> lastIdMsg = new Dictionary<int, int>();
+
+                    for (int k = 0; k < 2000000; ++k)
+                    {
+                        int idSender = int.Parse(credentials[2 + k * 2]);
+                        int idMsg = int.Parse(credentials[3 + k * 2]);
+
+                        // Обновляем последний idMsg для текущего idSender
+                        if (lastIdMsg.ContainsKey(idSender))
+                        {
+                            lastIdMsg[idSender] = Math.Max(lastIdMsg[idSender], idMsg);
+                        }
+                        else
+                        {
+                            lastIdMsg.Add(idSender, idMsg);
+                        }
+                    }
 
                     cursor.CommandText = @"SELECT * FROM messages
-                      WHERE (id_sender = @idSender AND id_msg > @idMsg)
-                      ORDER BY id_msg DESC;";
+              WHERE id_msg > (SELECT MAX(id_msg) FROM messages WHERE id_sender = messages.id_sender)
+              ORDER BY id_msg DESC;";
 
                     string result = "";
 
@@ -522,11 +537,16 @@ namespace shooter_server
                                 msg = reader.GetFieldValue<byte[]>(4)
                             };
 
-                            result += message.GetString();
+                            // Проверяем, отсутствует ли текущее сообщение в списке отправленных
+                            if (lastIdMsg.ContainsKey(message.idSender) && lastIdMsg[message.idSender] < message.idMsg)
+                            {
+                                // Добавляем отсутствующее сообщение в результат
+                                result += message.GetString();
+                            }
                         }
                     }
 
-                    // Возвращает строку типа: idSender idMsg timeMsg msg 
+                    // Возвращает строку типа: idSender idMsg timeMsg msg
                     lobby.SendMessagePlayer($"/ans {result}", ws, requestId);
                 }
             }
@@ -535,6 +555,7 @@ namespace shooter_server
                 Console.WriteLine($"Error GetMessages command: {e}");
             }
         }
+
 
 
 
