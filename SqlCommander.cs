@@ -503,7 +503,7 @@ namespace shooter_server
 
                     int requestId = int.Parse(credentials[0]);
                     long kSenderId = long.Parse(credentials[1]);
-                    kek = 2;
+                    long kek = 2;
                     for (int i = 0; i < kSenderId; i++){
                         long senderId = long.Parse(credentials[kek]);
                         kek++;
