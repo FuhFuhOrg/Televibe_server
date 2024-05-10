@@ -570,7 +570,7 @@ namespace shooter_server
                     }
 
                     // Возвращаем результат
-                    lobby.SendMessagePlayer($"/ans true", ws, requestId);
+                    lobby.SendMessagePlayer($"/ans {result}", ws, requestId);
                 }
             }
             catch (Exception e)
