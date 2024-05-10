@@ -548,7 +548,7 @@ namespace shooter_server
 
                         // Все айдишники после последнего, включая последнего
                         cursor.Parameters.AddWithValue("idSender", senderIds[i]);
-                        cursor.Parameters.AddWithValue("messageId", messageIds[j]);
+                        cursor.Parameters.AddWithValue("messageId", messageIds[kIdMsg]);
 
                         cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = @idSender AND id_msg >= @messageId ORDER BY id_msg ASC";
 
