@@ -569,7 +569,7 @@ namespace shooter_server
                     // Получение количества сообщений от данного пользователя
                     cursor.CommandText = "SELECT COUNT(*) FROM messages WHERE id_sender = @idSender";
                     cursor.Parameters.AddWithValue("id_sender", idSender);
-                    int idMsg = (int)await cursor.ExecuteScalarAsync();
+                    long idMsg = (long)await cursor.ExecuteScalarAsync();
 
 
 
