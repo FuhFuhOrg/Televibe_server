@@ -497,75 +497,81 @@ namespace shooter_server
 
                     credentials.RemoveAt(0);
 
-                    // requestId 3 1 2 3 5
-
                     int requestId = int.Parse(credentials[0]);
                     int kSenderId = int.Parse(credentials[1]);
                     int kIdMsg = int.Parse(credentials[2 + kSenderId]);
 
-                    // Создаем списки для senderId и idMsg
                     List<int> senderIds = new List<int>();
                     List<int> messageIds = new List<int>();
 
-                    // Parsing senderId
                     for (int i = 0; i < kSenderId; i++)
                     {
                         senderIds.Add(int.Parse(credentials[2 + i]));
                     }
 
-                    // Parsing idMsg
                     for (int i = 0; i < kIdMsg; i++)
                     {
                         messageIds.Add(int.Parse(credentials[2 + kSenderId + i]));
                     }
 
-                    // Создаем список для сообщений
                     List<Message> messages = new List<Message>();
 
-                    int idSender = 0;
-                    // Добавляем сообщения в список
-                    for (int i = 0; i < kSenderId; i++)
+                    for (int i = 0; i < kSenderId; ++i)
                     {
-                        idSender = senderIds[i];
-
-                        for (int j = 0; j < kIdMsg; j++)
+                        // Все айдишники кроме последнего
+                        for (int j = 0; j < kIdMsg - 1; ++j)
                         {
-                            long messageId = messageIds[j];
+                            cursor.Parameters.AddWithValue("idSender", senderIds[i]);
+                            cursor.Parameters.AddWithValue("messageId", messageIds[j]);
 
-                            cursor.Parameters.AddWithValue("idSender", idSender);
-                            cursor.Parameters.AddWithValue("messageId", messageId);
-
-                            // Формируем SQL-запрос
-                            string sql = $"SELECT * FROM messages WHERE id_sender = @idSender AND id_msg >= @messageId ORDER BY id_msg ASC";
-                            cursor.CommandText = sql;
+                            cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = @idSender AND id_msg = @messageId ORDER BY id_msg ASC";
 
                             using (var reader = await cursor.ExecuteReaderAsync())
                             {
-                                while (await reader.ReadAsync())
-                                {
-                                    Message message = new Message
-                                    {
-                                        id_sender = reader.GetInt32(0),
-                                        id_msg = reader.GetInt32(1),
-                                        time_msg = reader.GetDateTime(2),
-                                        msg = reader.GetFieldValue<byte[]>(3),
-                                    };
+                                await reader.ReadAsync();
 
-                                    messages.Add(message);
-                                }
+                                Message message = new Message
+                                {
+                                    id_sender = reader.GetInt32(0),
+                                    id_msg = reader.GetInt32(1),
+                                    time_msg = reader.GetDateTime(2),
+                                    msg = reader.GetFieldValue<byte[]>(3),
+                                };
+
+                                messages.Add(message);
+                            }
+                        }
+
+                        // Все айдишники после последнего, включая последнего
+                        cursor.Parameters.AddWithValue("idSender", senderIds[i]);
+                        cursor.Parameters.AddWithValue("messageId", messageIds[j]);
+
+                        cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = @idSender AND id_msg >= @messageId ORDER BY id_msg ASC";
+
+                        using (var reader = await cursor.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                Message message = new Message
+                                {
+                                    id_sender = reader.GetInt32(0),
+                                    id_msg = reader.GetInt32(1),
+                                    time_msg = reader.GetDateTime(2),
+                                    msg = reader.GetFieldValue<byte[]>(3),
+                                };
+
+                                messages.Add(message);
                             }
                         }
                     }
 
-                    // Формируем результат
                     string result = "";
                     foreach (var message in messages)
                     {
                         result += message.GetString();
                     }
 
-                    // Возвращаем результат
-                    lobby.SendMessagePlayer($"/ans true", ws, requestId);
+                    lobby.SendMessagePlayer($"/ans {result}", ws, requestId);
                 }
             }
             catch (Exception e)
@@ -573,6 +579,7 @@ namespace shooter_server
                 Console.WriteLine($"Error GetMessages command: {e}");
             }
         }
+
 
 
 
