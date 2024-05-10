@@ -527,8 +527,8 @@ namespace shooter_server
                                 //Console.WriteLine(credentials[kek]);
                                 int msss = int.Parse(credentials[kek]);
                                 kek++;
-                                cursor.Parameters.AddWithValue("idSender", userId);
-                                cursor.Parameters.AddWithValue("messageId", msss);
+                                //cursor.Parameters.AddWithValue("idSender", userId);
+                                //cursor.Parameters.AddWithValue("messageId", msss);
 
                                 //Console.WriteLine(userId.ToString() + " " + msss.ToString());
                                 cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = {userId} AND id_msg >= {msss} ORDER BY id_msg ASC";
@@ -557,8 +557,8 @@ namespace shooter_server
                             int idMsg = int.Parse(credentials[kek]);
                             kek++;
                             // Все айдишники после последнего, включая последнего
-                            cursor.Parameters.AddWithValue("idSender", userId);
-                            cursor.Parameters.AddWithValue("messageId", idMsg);
+                            //cursor.Parameters.AddWithValue("idSender", userId);
+                            //cursor.Parameters.AddWithValue("messageId", idMsg);
 
                             //Console.WriteLine(userId.ToString() + " " + idMsg.ToString());
                             cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = {userId} AND id_msg >= {idMsg} ORDER BY id_msg ASC";
