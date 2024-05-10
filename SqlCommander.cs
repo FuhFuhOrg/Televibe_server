@@ -328,6 +328,7 @@ namespace shooter_server
                     await cursor.ExecuteNonQueryAsync();
                     
                     Console.WriteLine("User Added");
+                    Console.WriteLine(requestId);
 
                     lobby.SendMessagePlayer(idChat + " " + idUser, ws, requestId);
                 }
