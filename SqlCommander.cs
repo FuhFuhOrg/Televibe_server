@@ -489,8 +489,100 @@ namespace shooter_server
             }
         }
 
+        // Вернуть сообщения, которые больше id_msg +
+        private async Task GetMessages(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
+        {
+            try
+            {
+                using (var cursor = dbConnection.CreateCommand())
+                {
+                    // GetMessages requestId kSenderId senderId[kSenderId] kIdMsg idMsg[kIdMsg]
+                    List<string> credentials = new List<string>(sqlCommand.Split(' '));
 
-        
+                    credentials.RemoveAt(0);
+
+                    int requestId = int.Parse(credentials[0]);
+                    int kSenderId = int.Parse(credentials[1]);
+                    int kIdMsg = int.Parse(credentials[2 + kSenderId]);
+
+                    List<int> senderIds = new List<int>();
+                    List<int> messageIds = new List<int>();
+
+                    for (int i = 0; i < kSenderId; i++)
+                    {
+                        senderIds.Add(int.Parse(credentials[2 + i]));
+                    }
+
+                    for (int i = 0; i < kIdMsg; i++)
+                    {
+                        messageIds.Add(int.Parse(credentials[2 + kSenderId + i]));
+                    }
+
+                    List<Message> messages = new List<Message>();
+
+                    for (int i = 0; i < kSenderId; ++i)
+                    {
+                        // Все айдишники кроме последнего
+                        for (int j = 0; j < kIdMsg - 1; ++j)
+                        {
+                            cursor.Parameters.AddWithValue("idSender", senderIds[i]);
+                            cursor.Parameters.AddWithValue("messageId", messageIds[j]);
+
+                            cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = @idSender AND id_msg = @messageId ORDER BY id_msg ASC";
+
+                            using (var reader = await cursor.ExecuteReaderAsync())
+                            {
+                                await reader.ReadAsync();
+
+                                Message message = new Message
+                                {
+                                    id_sender = reader.GetInt32(0),
+                                    id_msg = reader.GetInt32(1),
+                                    time_msg = reader.GetDateTime(2),
+                                    msg = reader.GetFieldValue<byte[]>(3),
+                                };
+
+                                messages.Add(message);
+                            }
+                        }
+
+                        // Все айдишники после последнего, включая последнего
+                        cursor.Parameters.AddWithValue("idSender", senderIds[i]);
+                        cursor.Parameters.AddWithValue("messageId", messageIds[j]);
+
+                        cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = @idSender AND id_msg >= @messageId ORDER BY id_msg ASC";
+
+                        using (var reader = await cursor.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                Message message = new Message
+                                {
+                                    id_sender = reader.GetInt32(0),
+                                    id_msg = reader.GetInt32(1),
+                                    time_msg = reader.GetDateTime(2),
+                                    msg = reader.GetFieldValue<byte[]>(3),
+                                };
+
+                                messages.Add(message);
+                            }
+                        }
+                    }
+
+                    string result = "";
+                    foreach (var message in messages)
+                    {
+                        result += message.GetString();
+                    }
+
+                    lobby.SendMessagePlayer($"/ans {result}", ws, requestId);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error GetMessages command: {e}");
+            }
+        }
 
 
 
