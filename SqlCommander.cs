@@ -531,7 +531,7 @@ namespace shooter_server
                                 cursor.Parameters.AddWithValue("messageId", msss);
 
                                 //Console.WriteLine(userId.ToString() + " " + msss.ToString());
-                                cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = {userId} AND id_msg >= {idMsg} ORDER BY id_msg ASC";
+                                cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = {userId} AND id_msg >= {msss} ORDER BY id_msg ASC";
 
                                 using (NpgsqlDataReader reader = await cursor.ExecuteReaderAsync())
                                 {
