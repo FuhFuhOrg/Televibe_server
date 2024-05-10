@@ -208,7 +208,7 @@ namespace shooter_server
                     {
                         cursor.Parameters.AddWithValue("idSender", idSender);
 
-                        cursor.CommandText = $"SELECT COUNT(*) FROM users WHERE id_sender = @idSender";
+                        cursor.CommandText = $"SELECT COUNT(*) FROM users WHERE id_user = @idSender";
 
                         long idUserCount = (long)cursor.ExecuteScalar();
 
@@ -300,6 +300,8 @@ namespace shooter_server
                     cursor.CommandText = @"INSERT INTO chat (id_chat, chat_password, is_privacy) VALUES (@idChat, @chatPassword, @isPrivacy);";
                     await cursor.ExecuteNonQueryAsync();
 
+                    Console.WriteLine("Chat Created");
+
                     await UserCreate(sqlCommand, senderId, dbConnection, lobby, ws, requestId, idChat);
                 }
             }
@@ -324,6 +326,9 @@ namespace shooter_server
 
                     cursor.CommandText = @"INSERT INTO users (id_user, id_chat) VALUES (@idUser, @idChat);";
                     await cursor.ExecuteNonQueryAsync();
+                    
+                    Console.WriteLine("User Added");
+                    Console.WriteLine(requestId);
 
                     lobby.SendMessagePlayer(idChat + " " + idUser, ws, requestId);
                 }
@@ -483,7 +488,6 @@ namespace shooter_server
                 Console.WriteLine($"Error RefreshListMessages command: {e}");
             }
         }
-
 
         // Вернуть сообщения, которые больше id_msg +
         private async Task GetMessages(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
