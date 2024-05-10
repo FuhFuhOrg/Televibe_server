@@ -517,15 +517,15 @@ namespace shooter_server
                         for (int i = 0; i < kSender; i++)
                         {
                             //Console.WriteLine(credentials[kek]);
-                            long userId = long.Parse(credentials[kek]);
+                            int userId = int.Parse(credentials[kek]);
                             kek++;
                             //Console.WriteLine(credentials[kek]);
-                            long kMsg = long.Parse(credentials[kek]);
+                            int kMsg = int.Parse(credentials[kek]);
                             kek++;
                             for (int j = 0; j < kMsg - 1; ++j)
                             {
                                 //Console.WriteLine(credentials[kek]);
-                                long msss = long.Parse(credentials[kek]);
+                                int msss = int.Parse(credentials[kek]);
                                 kek++;
                                 cursor.Parameters.AddWithValue("idSender", userId);
                                 cursor.Parameters.AddWithValue("messageId", msss);
