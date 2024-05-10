@@ -300,6 +300,8 @@ namespace shooter_server
                     cursor.CommandText = @"INSERT INTO chat (id_chat, chat_password, is_privacy) VALUES (@idChat, @chatPassword, @isPrivacy);";
                     await cursor.ExecuteNonQueryAsync();
 
+                    Console.WriteLine("Chat Created");
+
                     await UserCreate(sqlCommand, senderId, dbConnection, lobby, ws, requestId, idChat);
                 }
             }
@@ -324,6 +326,8 @@ namespace shooter_server
 
                     cursor.CommandText = @"INSERT INTO users (id_user, id_chat) VALUES (@idUser, @idChat);";
                     await cursor.ExecuteNonQueryAsync();
+                    
+                    Console.WriteLine("User Added");
 
                     lobby.SendMessagePlayer(idChat + " " + idUser, ws, requestId);
                 }
