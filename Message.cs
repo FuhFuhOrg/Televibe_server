@@ -2,9 +2,9 @@ namespace shooter_server
 {
     public class Message
     {
-        public int idSender { get; set; }
-        public int idMsg { get; set; }
-        public DateTime timeMsg { get; set; }
+        public int id_sender { get; set; }
+        public int id_msg { get; set; }
+        public DateTime time_msg { get; set; }
         public byte[] msg { get; set; }
 
         public Message()
@@ -14,7 +14,7 @@ namespace shooter_server
 
         public string GetString()
         {
-            return idSender.ToString() + " " + idMsg.ToString() + " " + timeMsg.ToString() + " " + msg.ToString() + " ";
+            return id_sender.ToString() + " " + id_msg.ToString() + " " + time_msg.ToString() + " " + msg.ToString() + " ";
         }
     }
 }
