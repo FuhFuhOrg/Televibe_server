@@ -10,6 +10,7 @@ using System.Numerics;
 using System.Diagnostics;
 using System.Net;
 
+
 namespace shooter_server
 {
     public class SqlCommander
@@ -92,7 +93,7 @@ namespace shooter_server
         }
 
 
-        // Возврат сообщения по idMsg
+        // Возврат сообщения по idMsg +
         private async Task ReturnMessageByIdMsg(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
             try
@@ -139,7 +140,7 @@ namespace shooter_server
         }
 
 
-        // Поиск сообщения по ключу в msg
+        // Поиск сообщения по ключу в msg +
         private async Task ReturnMessageByKeyWord(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
             using (var cursor = dbConnection.CreateCommand())
@@ -274,7 +275,7 @@ namespace shooter_server
         }
 
 
-        // Создание нового чата
+        // Создание нового чата +
         private async Task ChatCreate(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
             try
@@ -309,7 +310,7 @@ namespace shooter_server
         }
 
 
-        // Создание нового юзера
+        // Создание нового юзера +
         private async Task UserCreate(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws, int requestId, string idChat)
         {
             try
@@ -334,7 +335,7 @@ namespace shooter_server
         }
 
 
-        // Изменение сообщения
+        // Изменение сообщения +
         private async Task RefactorMessage(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
             try
@@ -399,7 +400,7 @@ namespace shooter_server
         }
 
 
-        // Удаление сообщения
+        // Удаление сообщения +
         private async Task DeleteMessage(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
             try
@@ -484,7 +485,7 @@ namespace shooter_server
         }
 
 
-        // Вернуть сообщения, которые больше id_msg
+        // Вернуть сообщения, которые больше id_msg +
         private async Task GetMessages(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
             try
@@ -536,7 +537,10 @@ namespace shooter_server
         }
 
 
-        // Отправить сообщение
+
+
+
+        // Отправить сообщение +
         private async Task SendMessage(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
             try
@@ -549,21 +553,29 @@ namespace shooter_server
                     credentials.RemoveAt(0);
 
                     int requestId = int.Parse(credentials[0]);
-                    int idMsg = int.Parse(credentials[1]);
-                    int idSender = int.Parse(credentials[2]);
+                    int idSender = int.Parse(credentials[1]);
 
-                    string time = credentials[3];
+                    string time = credentials[2];
                     string format = "yyyy-MM-dd HH:mm:ss.fff";
                     CultureInfo provider = CultureInfo.InvariantCulture;
                     DateTimeOffset timeMsg = DateTimeOffset.ParseExact(time, format, provider);
 
                     byte[] msg = Encoding.UTF8.GetBytes(credentials[3]);
 
+
+                    cursor.Parameters.AddWithValue("idSender", idSender);
+                    // Получение количества сообщений от данного пользователя
+                    cursor.CommandText = "SELECT COUNT(*) FROM messages WHERE id_sender = @idSender";
+                    cursor.Parameters.AddWithValue("id_sender", idSender);
+                    int idMsg = (int)await cursor.ExecuteScalarAsync();
+
+
+
                     // Добавление параметров в команду для предотвращения SQL-инъекций
                     cursor.Parameters.AddWithValue("id_sender", idSender);
-                    cursor.Parameters.AddWithValue("id_msg", idMsg);
                     cursor.Parameters.AddWithValue("time_msg", timeMsg);
                     cursor.Parameters.AddWithValue("msg", msg);
+                    cursor.Parameters.AddWithValue("idMsg", idMsg);
 
                     cursor.CommandText = "INSERT INTO messages (id_msg, id_sender, time_msg, msg) VALUES (@idSender, @idRecepient, @idMsg, @timeMsg, @msg)";
 
