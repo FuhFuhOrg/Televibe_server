@@ -567,6 +567,7 @@ namespace shooter_server
 
                             using (var reader = await cursor.ExecuteReaderAsync())
                             {
+                                Console.WriteLine(reader.ToString());
                                 if (reader.Read())
                                 {
                                     Message message = new Message
@@ -577,6 +578,7 @@ namespace shooter_server
                                         msg = reader.GetFieldValue<byte[]>(3),
                                     };
 
+                                    Console.WriteLine(message.ToString());
                                     messages.Add(message);
                                 }
                                 else
