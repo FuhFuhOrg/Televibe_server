@@ -567,12 +567,12 @@ namespace shooter_server
 
                             using (var reader = await cursor.ExecuteReaderAsync())
                             {
-                                if (await reader.ReadAsync())
+                                if (reader.Read())
                                 {
                                     Message message = new Message
                                     {
-                                        id_sender = reader.GetInt32(0),
-                                        id_msg = reader.GetInt32(1),
+                                        id_msg = reader.GetInt32(0),
+                                        id_sender = reader.GetInt32(1),
                                         time_msg = reader.GetDateTime(2),
                                         msg = reader.GetFieldValue<byte[]>(3),
                                     };
