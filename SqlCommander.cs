@@ -208,7 +208,7 @@ namespace shooter_server
                     {
                         cursor.Parameters.AddWithValue("idSender", idSender);
 
-                        cursor.CommandText = $"SELECT COUNT(*) FROM users WHERE id_sender = @idSender";
+                        cursor.CommandText = $"SELECT COUNT(*) FROM users WHERE id_user = @idSender";
 
                         long idUserCount = (long)cursor.ExecuteScalar();
 
