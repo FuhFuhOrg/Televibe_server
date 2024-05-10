@@ -206,7 +206,7 @@ namespace shooter_server
 
                     using (var cursor = dbConnection.CreateCommand())
                     {
-                        cursor.Parameters.AddWithValue("id_sender", idSender);
+                        cursor.Parameters.AddWithValue("idSender", idSender);
 
                         cursor.CommandText = $"SELECT COUNT(*) FROM users WHERE id_sender = @idSender";
 
