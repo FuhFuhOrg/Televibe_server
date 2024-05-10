@@ -555,12 +555,14 @@ namespace shooter_server
                     int requestId = int.Parse(credentials[0]);
                     int idSender = int.Parse(credentials[1]);
 
-                    string time = credentials[2];
+                    string time1 = credentials[2];
+                    string time2 = credentials[3];
+                    string time = time1 + " " + time2;
                     string format = "yyyy-MM-dd HH:mm:ss.fff";
                     CultureInfo provider = CultureInfo.InvariantCulture;
                     DateTimeOffset timeMsg = DateTimeOffset.ParseExact(time, format, provider);
 
-                    byte[] msg = Encoding.UTF8.GetBytes(credentials[3]);
+                    byte[] msg = Encoding.UTF8.GetBytes(credentials[4]);
 
 
                     cursor.Parameters.AddWithValue("idSender", idSender);
