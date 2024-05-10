@@ -593,6 +593,7 @@ namespace shooter_server
                         result += message.GetString();
                     }
 
+                    Console.WriteLine(result);
                     lobby.SendMessagePlayer($"{result}", ws, requestId);
                 }
             }
