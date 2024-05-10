@@ -579,7 +579,7 @@ namespace shooter_server
                     cursor.Parameters.AddWithValue("msg", msg);
                     cursor.Parameters.AddWithValue("idMsg", idMsg);
 
-                    cursor.CommandText = "INSERT INTO messages (id_msg, id_sender, time_msg, msg) VALUES (@idSender, @idRecepient, @idMsg, @timeMsg, @msg)";
+                    cursor.CommandText = "INSERT INTO messages (id_msg, id_sender, time_msg, msg) VALUES (@idMsg, @idSender, @timeMsg, @msg)";
 
                     await cursor.ExecuteNonQueryAsync();
 
