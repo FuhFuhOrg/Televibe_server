@@ -502,11 +502,11 @@ namespace shooter_server
                     credentials.RemoveAt(0);
 
                     int requestId = int.Parse(credentials[0]);
-                    int kSenderId = int.Parse(credentials[1]);
-                    int kIdMsg = int.Parse(credentials[2 + kSenderId]);
+                    long kSenderId = long.Parse(credentials[1]);
+                    int kIdMsg = int.Parse(credentials[2 + (int)kSenderId]);
 
                     List<int> senderIds = new List<int>();
-                    List<int> messageIds = new List<int>();
+                    List<long> messageIds = new List<long>();
 
                     for (int i = 0; i < kSenderId; i++)
                     {
@@ -515,7 +515,7 @@ namespace shooter_server
 
                     for (int i = 0; i < kIdMsg; i++)
                     {
-                        messageIds.Add(int.Parse(credentials[2 + kSenderId + i]));
+                        messageIds.Add(int.Parse(credentials[2 + (int)kSenderId + i]));
                     }
 
                     List<Message> messages = new List<Message>();
