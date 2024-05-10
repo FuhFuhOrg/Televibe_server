@@ -548,6 +548,7 @@ namespace shooter_server
                         cursor.Parameters.AddWithValue("idSender", senderId);
                         cursor.Parameters.AddWithValue("messageId", idMsg);
 
+                        Debug.WriteLine(senderId + " " + idMsg);
                         cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = @idSender AND id_msg >= @messageId ORDER BY id_msg ASC";
 
                         using (var reader = await cursor.ExecuteReaderAsync())
@@ -573,7 +574,7 @@ namespace shooter_server
                         result += message.GetString();
                     }
 
-                    lobby.SendMessagePlayer($"/ans {result}", ws, requestId);
+                    lobby.SendMessagePlayer($"{result}", ws, requestId);
                 }
             }
             catch (Exception e)
