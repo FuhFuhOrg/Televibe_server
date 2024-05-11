@@ -2,6 +2,7 @@ namespace shooter_server
 {
     public class Message
     {
+        public int id_chat {  get; set; }
         public int id_sender { get; set; }
         public int id_msg { get; set; }
         public DateTime time_msg { get; set; }
@@ -14,7 +15,7 @@ namespace shooter_server
 
         public string GetString()
         {
-            return id_sender.ToString() + " " + id_msg.ToString() + " " + time_msg.ToString() + " " + msg.ToString() + " ";
+            return id_chat.ToString() + " " + id_sender.ToString() + " " + id_msg.ToString() + " " + time_msg.ToString() + " " + msg.ToString() + " ";
         }
     }
 }
