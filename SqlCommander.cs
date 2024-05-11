@@ -196,6 +196,7 @@ namespace shooter_server
             }
         }
 
+
         private int GenerateUniqueUserId(NpgsqlConnection dbConnection)
         {
             try
@@ -246,7 +247,9 @@ namespace shooter_server
                 {
                     StringBuilder sb = new StringBuilder();
 
-                    for (int i = 0; i < 128; ++i)
+                    sb.Append(random.Next(9) + 1);
+
+                    for (int i = 0; i < 127; ++i)
                     {
                         sb.Append(random.Next(10));
                     }
