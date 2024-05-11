@@ -605,6 +605,7 @@ namespace shooter_server
             }
         }
 
+
         // Вернуть сообщения, которые больше id_msg +
         private async Task GetMessages(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
