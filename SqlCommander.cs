@@ -369,7 +369,7 @@ namespace shooter_server
                         cursor.Parameters.AddWithValue("idChat", idChat);
                         cursor.Parameters.AddWithValue("chatPassword", chatPassword);
 
-                        cursor.CommandText = @"SELECT CASE WHEN EXISTS (SELECT 1 FROM chat WHERE idChat = @idChat AND chatPassword = @chatPassword) THEN 1 ELSE 0 END AS IsMatch;";
+                        cursor.CommandText = @"SELECT CASE WHEN EXISTS (SELECT 1 FROM chat WHERE id_chat = @idChat AND chat_password = @chatPassword) THEN 1 ELSE 0 END AS IsMatch;";
 
                         if (Convert.ToBoolean(cursor.ExecuteScalar()))
                         {
@@ -392,7 +392,7 @@ namespace shooter_server
 
                         cursor.Parameters.AddWithValue("idChat", idChat);
 
-                        cursor.CommandText = @"SELECT CASE WHEN EXISTS (SELECT 1 FROM chat WHERE idChat = @idChat) THEN 1 ELSE 0 END AS IsMatch;";
+                        cursor.CommandText = @"SELECT CASE WHEN EXISTS (SELECT 1 FROM chat WHERE id_chat = @idChat) THEN 1 ELSE 0 END AS IsMatch;";
 
                         if (Convert.ToBoolean(cursor.ExecuteScalar()))
                         {
