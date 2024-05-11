@@ -352,6 +352,7 @@ namespace shooter_server
                 using (var cursor = dbConnection.CreateCommand())
                 {
                     int idUser = GenerateUniqueUserId(dbConnection);
+                    string fullIdChat = "";
 
                     // addUserToChat requestId idChat chatPassword 
                     List<string> credentials = new List<string>(sqlCommand.Split(' '));
@@ -381,7 +382,7 @@ namespace shooter_server
                         {
                             if (await reader.ReadAsync())
                             {
-                                string fullIdChat = reader.GetString("id_chat");
+                                fullIdChat = reader.GetString("id_chat");
 
                                 if (fullIdChat.Substring(0, 8) == idChat)
                                 {
@@ -412,7 +413,7 @@ namespace shooter_server
                         }
                     }
 
-                    lobby.SendMessagePlayer(idUser.ToString(), ws, requestId);
+                    lobby.SendMessagePlayer(fullIdChat + " " + idUser.ToString(), ws, requestId);
                 }
             }
             catch (Exception e)
