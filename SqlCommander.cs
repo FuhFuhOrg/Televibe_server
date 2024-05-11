@@ -498,35 +498,42 @@ namespace shooter_server
                 {
                     // GetMessages requestId kSenderId senderId[kSenderId] kIdMsg idMsg[kIdMsg]
                     List<string> credentials = new List<string>(sqlCommand.Split(' '));
-
                     credentials.RemoveAt(0);
 
                     List<Message> messages = new List<Message>();
 
                     int requestId = int.Parse(credentials[0]);
-                    long kChats = long.Parse(credentials[1]);
-                    int kek = 2;
+                    credentials.RemoveAt(0);
+
+                    long kChats = long.Parse(credentials[0]);
+                    credentials.RemoveAt(0);
+
                     for (int k = 0; k < kChats; k++)
                     {
                         //Console.WriteLine(credentials[kek]);
-                        string chatId = credentials[kek];
-                        kek++;
+                        string chatId = credentials[0];
+                        credentials.RemoveAt(0);
+
                         //Console.WriteLine(credentials[kek]);
-                        long kSender = long.Parse(credentials[kek]);
-                        kek++;
+                        long kSender = long.Parse(credentials[0]);
+                        credentials.RemoveAt(0);
+
                         for (int i = 0; i < kSender; i++)
                         {
                             //Console.WriteLine(credentials[kek]);
-                            int userId = int.Parse(credentials[kek]);
-                            kek++;
+                            int userId = int.Parse(credentials[0]);
+                            credentials.RemoveAt(0);
+
                             //Console.WriteLine(credentials[kek]);
-                            int kMsg = int.Parse(credentials[kek]);
-                            kek++;
+                            int kMsg = int.Parse(credentials[0]);
+                            credentials.RemoveAt(0);
+
                             for (int j = 0; j < kMsg - 1; ++j)
                             {
                                 //Console.WriteLine(credentials[kek]);
-                                int msss = int.Parse(credentials[kek]);
-                                kek++;
+                                int msss = int.Parse(credentials[0]);
+                                credentials.RemoveAt(0);
+
                                 //cursor.Parameters.AddWithValue("idSender", userId);
                                 //cursor.Parameters.AddWithValue("messageId", msss);
 
@@ -554,9 +561,11 @@ namespace shooter_server
                             }
 
                             //Console.WriteLine(credentials[kek]);
-                            int idMsg = int.Parse(credentials[kek]);
-                            kek++;
+                            int idMsg = int.Parse(credentials[0]);
+                            credentials.RemoveAt(0);
+
                             // Все айдишники после последнего, включая последнего
+
                             //cursor.Parameters.AddWithValue("idSender", userId);
                             //cursor.Parameters.AddWithValue("messageId", idMsg);
 
