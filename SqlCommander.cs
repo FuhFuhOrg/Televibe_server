@@ -386,7 +386,7 @@ namespace shooter_server
                                 if (fullIdChat.Substring(0, 8) == idChat)
                                 {
                                     cursor.Parameters.AddWithValue("idUser", idUser);
-                                    cursor.Parameters.AddWithValue("idChat", int.Parse(fullIdChat));
+                                    cursor.Parameters.AddWithValue("idChat", fullIdChat);
 
                                     cursor.CommandText = @"INSERT INTO users (id_user, id_chat) VALUES (@idUser, @idChat);";
 
