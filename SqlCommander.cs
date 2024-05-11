@@ -383,7 +383,7 @@ namespace shooter_server
                             {
                                 string fullIdChat = reader.GetString("id_chat");
 
-                                if (fullIdChat.Substring(0, 15) == idChat)
+                                if (fullIdChat.Substring(0, 8) == idChat)
                                 {
                                     using (var insertCommand = dbConnection.CreateCommand())
                                     {
