@@ -369,22 +369,39 @@ namespace shooter_server
                         cursor.Parameters.AddWithValue("idChat", idChat);
                         cursor.Parameters.AddWithValue("chatPassword", chatPassword);
 
-                        cursor.CommandText = @"SELECT CASE WHEN EXISTS (SELECT 1 FROM chat WHERE id_chat = @idChat AND chat_password = @chatPassword) THEN 1 ELSE 0 END AS IsMatch;";
+                        cursor.CommandText = @"SELECT SUBSTR(id_сhat, 1, 15) AS first_15_digits
+                                                    FROM chat
+                                                    WHERE SUBSTR(id_сhat, 1, 15) = @idChat
+                                                    AND chat_password = @chatPassword;";
 
-                        if (Convert.ToBoolean(cursor.ExecuteScalar()))
+                        using (var reader = cursor.ExecuteReader())
                         {
-                            cursor.Parameters.AddWithValue("idUser", idUser);
-                            cursor.Parameters.AddWithValue("idChat", idChat);
+                            if (reader.Read())
+                            {
+                                string first15Digits = reader.GetString("first_15_digits");
 
-                            cursor.CommandText = @"INSERT INTO users (id_user, id_chat) VALUES (@idUser, @idChat);";
-                            await cursor.ExecuteNonQueryAsync();
+                                if (first15Digits == idChat.ToString().Substring(0, 15))
+                                {
+                                    cursor.Parameters.AddWithValue("idUser", idUser);
+                                    cursor.Parameters.AddWithValue("idChat", idChat);
 
-                            Console.WriteLine($"Success");
-                        }
-                        else
-                        {
-                            Console.WriteLine($"Password or id entered incorrectly");
-                        }                        
+                                    cursor.CommandText = @"INSERT INTO users (id_user, id_chat) VALUES (@idUser, @idChat);";
+
+                                    await cursor.ExecuteNonQueryAsync();
+
+                                    Console.WriteLine($"Success");
+                                }
+                                else
+                                {
+                                    Console.WriteLine($"Password or id entered incorrectly");
+                                }
+                            }
+                            else
+                            {
+                                Console.WriteLine("No matching records found.");
+                                return;
+                            }
+                        }               
                     }
                     else if (credentials.Count == 1)
                     {
