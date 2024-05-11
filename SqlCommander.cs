@@ -22,6 +22,7 @@ namespace shooter_server
         private string database;
         private int port;
 
+
         public SqlCommander(string host, string user, string password, string database, int port)
         {
             this.host = host;
@@ -30,6 +31,7 @@ namespace shooter_server
             this.database = database;
             this.port = port;
         }
+
 
         public async Task ExecuteSqlCommand(Lobby lobby, WebSocket webSocket, string sqlCommand, Player player)
         {
@@ -421,7 +423,6 @@ namespace shooter_server
                 Console.WriteLine($"Error addUserToChat command: {e}");
             }
         }
-
 
 
         // Изменение сообщения +
