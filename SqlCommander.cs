@@ -385,6 +385,8 @@ namespace shooter_server
 
                                 if (fullIdChat.Substring(0, 8) == idChat)
                                 {
+                                    reader.Close();
+
                                     using (var insertCommand = dbConnection.CreateCommand())
                                     {
                                         insertCommand.Parameters.AddWithValue("idUser", idUser);
