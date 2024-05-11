@@ -388,7 +388,7 @@ namespace shooter_server
                                     using (var insertCommand = dbConnection.CreateCommand())
                                     {
                                         insertCommand.Parameters.AddWithValue("idUser", idUser);
-                                        insertCommand.Parameters.AddWithValue("idChat", int.Parse(fullIdChat));
+                                        insertCommand.Parameters.AddWithValue("idChat", fullIdChat);
 
                                         insertCommand.CommandText = @"INSERT INTO users (id_user, id_chat) VALUES (@idUser, @idChat);";
 
