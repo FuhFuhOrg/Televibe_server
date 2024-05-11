@@ -383,16 +383,19 @@ namespace shooter_server
                             {
                                 string fullIdChat = reader.GetString("id_chat");
 
-                                if (fullIdChat.Substring(0, 8) == idChat)
+                                if (fullIdChat.Substring(0, 15) == idChat)
                                 {
-                                    cursor.Parameters.AddWithValue("idUser", idUser);
-                                    cursor.Parameters.AddWithValue("idChat", fullIdChat);
+                                    using (var insertCommand = dbConnection.CreateCommand())
+                                    {
+                                        insertCommand.Parameters.AddWithValue("idUser", idUser);
+                                        insertCommand.Parameters.AddWithValue("idChat", int.Parse(fullIdChat));
 
-                                    cursor.CommandText = @"INSERT INTO users (id_user, id_chat) VALUES (@idUser, @idChat);";
+                                        insertCommand.CommandText = @"INSERT INTO users (id_user, id_chat) VALUES (@idUser, @idChat);";
 
-                                    await cursor.ExecuteNonQueryAsync();
+                                        await insertCommand.ExecuteNonQueryAsync();
 
-                                    Console.WriteLine($"Success");
+                                        Console.WriteLine($"Success");
+                                    }
                                 }
                                 else
                                 {
