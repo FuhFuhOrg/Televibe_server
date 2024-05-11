@@ -360,30 +360,33 @@ namespace shooter_server
                     int requestId = int.Parse(credentials[0]);
                     credentials.RemoveAt(0);
 
-                    if (credentials.Count == 2)
+                    if (credentials.Count == 2 || credentials.Count == 1)
                     {
                         // Если чат с паролем
-                        int idChat = int.Parse(credentials[0]);
-                        String chatPassword = credentials[1];
+                        string idChat = credentials[0];
+                        String chatPassword = credentials.Count == 2 ? credentials[1] : null;
 
                         cursor.Parameters.AddWithValue("idChat", idChat);
-                        cursor.Parameters.AddWithValue("chatPassword", chatPassword);
+                        if (chatPassword != null)
+                        {
+                            cursor.Parameters.AddWithValue("chatPassword", chatPassword);
+                        }
 
-                        cursor.CommandText = @"SELECT SUBSTR(id_сhat, 1, 15) AS first_15_digits
-                                                    FROM chat
-                                                    WHERE SUBSTR(id_сhat, 1, 15) = @idChat
-                                                    AND chat_password = @chatPassword;";
+                        cursor.CommandText = @"SELECT id_chat
+                                    FROM chat
+                                    WHERE SUBSTR(id_chat, 1, 15) = @idChat" +
+                                            (chatPassword != null ? " AND chat_password = @chatPassword" : "") + ";";
 
                         using (var reader = cursor.ExecuteReader())
                         {
                             if (await reader.ReadAsync())
                             {
-                                string first15Digits = reader.GetString("first_15_digits");
+                                string fullIdChat = reader.GetString("id_chat");
 
-                                if (first15Digits == idChat.ToString())
+                                if (fullIdChat.Substring(0, 15) == idChat)
                                 {
                                     cursor.Parameters.AddWithValue("idUser", idUser);
-                                    cursor.Parameters.AddWithValue("idChat", idChat);
+                                    cursor.Parameters.AddWithValue("idChat", fullIdChat);
 
                                     cursor.CommandText = @"INSERT INTO users (id_user, id_chat) VALUES (@idUser, @idChat);";
 
@@ -403,46 +406,6 @@ namespace shooter_server
                             }
                         }
                     }
-                    else if (credentials.Count == 1)
-                    {
-                        int idChat = int.Parse(credentials[0]);
-
-                        cursor.Parameters.AddWithValue("idChat", idChat);
-
-                        cursor.CommandText = @"SELECT SUBSTR(id_сhat, 1, 15) AS first_15_digits
-                                                    FROM chat
-                                                    WHERE SUBSTR(id_сhat, 1, 15) = @idChat
-                                                    AND chat_password = @chatPassword;";
-
-
-                        using (var reader = cursor.ExecuteReader())
-                        {
-                            if (await reader.ReadAsync())
-                            {
-                                string first15Digits = reader.GetString("first_15_digits");
-
-                                if (first15Digits == idChat.ToString())
-                                {
-                                    cursor.Parameters.AddWithValue("idUser", idUser);
-                                    cursor.Parameters.AddWithValue("idChat", idChat);
-
-                                    cursor.CommandText = @"INSERT INTO users (id_user, id_chat) VALUES (@idUser, @idChat);";
-
-                                    await cursor.ExecuteNonQueryAsync();
-
-                                    Console.WriteLine($"Success");
-                                }
-                                else
-                                {
-                                    Console.WriteLine($"id entered incorrectly");
-                                }
-                            }
-                            else
-                            {
-                                Console.WriteLine($"Id or password has not been entered");
-                            }
-                        }
-                    }
 
                     lobby.SendMessagePlayer(idUser.ToString(), ws, requestId);
                 }
@@ -452,6 +415,7 @@ namespace shooter_server
                 Console.WriteLine($"Error addUserToChat command: {e}");
             }
         }
+
 
 
         // Изменение сообщения +
