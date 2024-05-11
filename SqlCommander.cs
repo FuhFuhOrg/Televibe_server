@@ -376,7 +376,7 @@ namespace shooter_server
 
                         using (var reader = cursor.ExecuteReader())
                         {
-                            if (reader.Read())
+                            if (await reader.ReadAsync())
                             {
                                 string first15Digits = reader.GetString("first_15_digits");
 
@@ -411,7 +411,7 @@ namespace shooter_server
 
                         cursor.CommandText = @"SELECT CASE WHEN EXISTS (SELECT 1 FROM chat WHERE id_chat = @idChat) THEN 1 ELSE 0 END AS IsMatch;";
 
-                        if (Convert.ToBoolean(cursor.ExecuteScalar()))
+                        if (Convert.ToBoolean(await cursor.ExecuteScalarAsync()))
                         {
                             cursor.Parameters.AddWithValue("idUser", idUser);
                             cursor.Parameters.AddWithValue("idChat", idChat);
