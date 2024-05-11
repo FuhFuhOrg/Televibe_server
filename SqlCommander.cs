@@ -706,7 +706,7 @@ namespace shooter_server
                     string time1 = credentials[2];
                     string time2 = credentials[3];
                     string time = time1 + " " + time2;
-                    string format = "yyyy-MM-dd HH:mm:ss.fff";
+                    string format = "yyyy-MM-dd HH:mm:ss";
                     CultureInfo provider = CultureInfo.InvariantCulture;
                     DateTimeOffset timeMsg = DateTimeOffset.ParseExact(time, format, provider);
 
