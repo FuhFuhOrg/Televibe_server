@@ -366,7 +366,7 @@ namespace shooter_server
                     {
                         // Если чат с паролем
                         string idChat = credentials[0];
-                        String chatPassword = credentials.Count == 2 ? credentials[1] : null;
+                        String chatPassword = credentials.Count == 2 ? credentials[1] : "";
 
                         cursor.Parameters.AddWithValue("idChat", idChat);
                         if (chatPassword != null)
