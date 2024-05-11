@@ -570,6 +570,7 @@ namespace shooter_server
                                 {
                                     Message message = new Message
                                     {
+                                        id_chat = chatId,
                                         id_msg = reader.GetInt32(0),
                                         id_sender = reader.GetInt32(1),
                                         time_msg = reader.GetDateTime(2),

@@ -2,7 +2,7 @@ namespace shooter_server
 {
     public class Message
     {
-        public int id_chat {  get; set; }
+        public string id_chat {  get; set; }
         public int id_sender { get; set; }
         public int id_msg { get; set; }
         public DateTime time_msg { get; set; }
