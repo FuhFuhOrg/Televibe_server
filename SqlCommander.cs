@@ -9,6 +9,7 @@ using System.Globalization;
 using System.Numerics;
 using System.Diagnostics;
 using System.Net;
+using System.ComponentModel;
 
 
 namespace shooter_server
@@ -67,6 +68,9 @@ namespace shooter_server
                             break;
                         case string s when s.StartsWith("CheckWebSocket"):
                             await Task.Run(() => CheckWebSocket(sqlCommand, senderId, dbConnection, lobby, webSocket));
+                            break;
+                        case string s when s.StartsWith("addUserToChat"):
+                            await Task.Run(() => addUserToChat(sqlCommand, senderId, dbConnection, lobby, webSocket));
                             break;
                         case string s when s.StartsWith("DeleteMessages"):
                             await Task.Run(() => DeleteMessage(sqlCommand, senderId, dbConnection, lobby, webSocket));
@@ -340,6 +344,116 @@ namespace shooter_server
         }
 
 
+        // Добавить пользователя в чат без пароля
+        private String addUserToChatWithoutPassword(NpgsqlConnection dbConnection, int idUser, int idChat)
+        {
+            try
+            {
+                using (var cursor = dbConnection.CreateCommand())
+                {
+                    cursor.Parameters.AddWithValue("idChat", idChat);
+
+                    cursor.CommandText = @"SELECT CASE WHEN EXISTS (SELECT 1 FROM chat WHERE idChat = @idChat) THEN 1 ELSE 0 END AS IsMatch;";
+
+                    if (Convert.ToBoolean(cursor.ExecuteScalar()))
+                    {
+                        return "You have successfully entered the chat room";
+                    }
+                    else
+                    {
+                        return "Password or id entered incorrectly";
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error addUserToChatWithoutPassword command: {e}");
+                return $"Error addUserToChatWithoutPassword command: {e}";
+            }
+        }
+
+
+        // Добавить пользователя в чат с паролем
+        private String addUserToChatPassworded(NpgsqlConnection dbConnection, int idUser, int idChat, String chatPassword)
+        {
+            try
+            {
+                using (var cursor = dbConnection.CreateCommand())
+                {
+                    cursor.Parameters.AddWithValue("idChat", idChat);
+                    cursor.Parameters.AddWithValue("chatPassword", chatPassword);
+
+                    cursor.CommandText = @"SELECT CASE WHEN EXISTS (SELECT 1 FROM chat WHERE idChat = @idChat AND chatPassword = @chatPassword) THEN 1 ELSE 0 END AS IsMatch;"
+
+                    if (Convert.ToBoolean(cursor.ExecuteScalar()))
+                    {
+                        return "You have successfully entered the chat room";
+                    }
+                    else
+                    {
+                        return "Password or id entered incorrectly";
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error addUserToChatPassworded command: {e}");
+                return $"Error addUserToChatPassworded command: {e}";
+            }
+        }
+
+
+        // Добавить пользователя в чат
+        private async Task addUserToChat(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
+        {
+            try
+            {
+                using (var cursor = dbConnection.CreateCommand())
+                {
+                    // addUserToChat requestId idUser idChat chatPassword 
+                    List<string> credentials = new List<string>(sqlCommand.Split(' '));
+                    credentials.RemoveAt(0);
+
+                    int requestId = int.Parse(credentials[0]);
+                    credentials.RemoveAt(0);
+
+                    if (credentials.Count == 3)
+                    {
+                        // Если чат с паролем
+                        int idUser = int.Parse(credentials[0]);
+                        int idChat = int.Parse(credentials[1]);
+                        String chatPassword = credentials[2];
+
+                        String result = addUserToChatPassworded(dbConnection, idUser, idChat, chatPassword);
+
+                        Console.WriteLine(result);
+
+                        lobby.SendMessagePlayer(result, ws, requestId);
+                    }
+                    else if (credentials.Count == 3)
+                    {
+                        int idUser = int.Parse(credentials[0]);
+                        int idChat = int.Parse(credentials[1]);
+
+                        String result = addUserToChatWithoutPassword(dbConnection, idUser, idChat);
+
+                        Console.WriteLine(result);
+
+                        lobby.SendMessagePlayer(result, ws, requestId);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Id or password has not been entered");
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error addUserToChat command: {e}");
+            }
+        }
+
+
         // Изменение сообщения +
         private async Task RefactorMessage(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
@@ -347,23 +461,25 @@ namespace shooter_server
             {
                 using (var cursor = dbConnection.CreateCommand())
                 {
-                    // RefactorMessage requestId idMsg msg
+                    // RefactorMessage requestId idMsg idSender msg
                     List<string> credentials = new List<string>(sqlCommand.Split(' '));
 
                     credentials.RemoveAt(0);
 
                     int requestId = int.Parse(credentials[0]);
                     int idMsg = int.Parse(credentials[1]);
-                    byte[] msg = Encoding.UTF8.GetBytes(credentials[2]);
+                    int idSender = int.Parse(credentials[2]);
+                    byte[] msg = Convert.FromBase64String(credentials[3]);
 
                     cursor.Parameters.AddWithValue("idMsg", idMsg);
                     cursor.Parameters.AddWithValue("msg", msg);
+                    cursor.Parameters.AddWithValue("idSender", idSender);
 
-                    cursor.CommandText = @"UPDATE messages SET msg = @msg WHERE id_msg = @idMsg;";
+                    cursor.CommandText = @"UPDATE messages SET msg = @msg WHERE (id_msg = @idMsg AND id_sender = @idSender);";
 
                     await cursor.ExecuteNonQueryAsync();
 
-                    lobby.SendMessagePlayer($"/ans true", ws, requestId);
+                    lobby.SendMessagePlayer($"true", ws, requestId);
                 }
             }
             catch (Exception e)
@@ -485,7 +601,7 @@ namespace shooter_server
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Error RefreshListMessages command: {e}");
+                Console.WriteLine($"Error ReturnLastKMessages command: {e}");
             }
         }
 
@@ -546,7 +662,6 @@ namespace shooter_server
                                         messages.Add(message);
                                     }
                                 }
-
                             }
                             int idMsg = int.Parse(credentials[0]);
                             credentials.RemoveAt(0);
@@ -616,6 +731,7 @@ namespace shooter_server
 
 
                     cursor.Parameters.AddWithValue("idSender", idSender);
+
                     // Получение количества сообщений от данного пользователя
                     cursor.CommandText = "SELECT COUNT(*) FROM messages WHERE id_sender = @idSender";
                     cursor.Parameters.AddWithValue("id_sender", idSender);
