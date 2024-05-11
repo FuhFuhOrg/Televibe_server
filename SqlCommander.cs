@@ -397,8 +397,6 @@ namespace shooter_server
 
                                         insertCommand.CommandText = @"INSERT INTO users (id_user, id_chat) VALUES (@idUser, @idChat);";
 
-                                        SendMessage($"SendMessage {requestId} {idUser} 2000-01-01 00:00:00.010", senderId, dbConnection, lobby, ws);
-
                                         await insertCommand.ExecuteNonQueryAsync();
 
                                         Console.WriteLine($"Success");
@@ -701,18 +699,7 @@ namespace shooter_server
                     CultureInfo provider = CultureInfo.InvariantCulture;
                     DateTimeOffset timeMsg = DateTimeOffset.ParseExact(time, format, provider);
 
-                    byte[] msg;
-
-                    // Пока что костыль
-                    if (credentials.Count == 4)
-                    {
-                        msg = Convert.FromBase64String(credentials[4]);
-                    }
-                    else
-                    {
-                        msg = null;
-                    }
-
+                    byte[]  msg = Convert.FromBase64String(credentials[4]);
 
                     cursor.Parameters.AddWithValue("idSender", idSender);
 
