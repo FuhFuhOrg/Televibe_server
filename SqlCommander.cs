@@ -380,7 +380,7 @@ namespace shooter_server
                             {
                                 string first15Digits = reader.GetString("first_15_digits");
 
-                                if (first15Digits == idChat.ToString().Substring(0, 15))
+                                if (first15Digits == idChat.ToString())
                                 {
                                     cursor.Parameters.AddWithValue("idUser", idUser);
                                     cursor.Parameters.AddWithValue("idChat", idChat);
@@ -401,7 +401,7 @@ namespace shooter_server
                                 Console.WriteLine("No matching records found.");
                                 return;
                             }
-                        }               
+                        }
                     }
                     else if (credentials.Count == 1)
                     {
@@ -409,26 +409,39 @@ namespace shooter_server
 
                         cursor.Parameters.AddWithValue("idChat", idChat);
 
-                        cursor.CommandText = @"SELECT CASE WHEN EXISTS (SELECT 1 FROM chat WHERE id_chat = @idChat) THEN 1 ELSE 0 END AS IsMatch;";
+                        cursor.CommandText = @"SELECT SUBSTR(id_сhat, 1, 15) AS first_15_digits
+                                                    FROM chat
+                                                    WHERE SUBSTR(id_сhat, 1, 15) = @idChat
+                                                    AND chat_password = @chatPassword;";
 
-                        if (Convert.ToBoolean(await cursor.ExecuteScalarAsync()))
+
+                        using (var reader = cursor.ExecuteReader())
                         {
-                            cursor.Parameters.AddWithValue("idUser", idUser);
-                            cursor.Parameters.AddWithValue("idChat", idChat);
+                            if (await reader.ReadAsync())
+                            {
+                                string first15Digits = reader.GetString("first_15_digits");
 
-                            cursor.CommandText = @"INSERT INTO users (id_user, id_chat) VALUES (@idUser, @idChat);";
-                            await cursor.ExecuteNonQueryAsync();
+                                if (first15Digits == idChat.ToString())
+                                {
+                                    cursor.Parameters.AddWithValue("idUser", idUser);
+                                    cursor.Parameters.AddWithValue("idChat", idChat);
 
-                            Console.WriteLine($"Success");
+                                    cursor.CommandText = @"INSERT INTO users (id_user, id_chat) VALUES (@idUser, @idChat);";
+
+                                    await cursor.ExecuteNonQueryAsync();
+
+                                    Console.WriteLine($"Success");
+                                }
+                                else
+                                {
+                                    Console.WriteLine($"id entered incorrectly");
+                                }
+                            }
+                            else
+                            {
+                                Console.WriteLine($"Id or password has not been entered");
+                            }
                         }
-                        else
-                        {
-                            Console.WriteLine($"id entered incorrectly");
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine($"Id or password has not been entered");
                     }
 
                     lobby.SendMessagePlayer(idUser.ToString(), ws, requestId);
