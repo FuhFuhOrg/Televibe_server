@@ -508,6 +508,12 @@ namespace shooter_server
                     long kChats = long.Parse(credentials[0]);
                     credentials.RemoveAt(0);
 
+                    if (credentials.Count == 0)
+                    {
+                        Console.WriteLine($"id_msg has not been sent");
+                        return;                    
+                    }
+
                     for (int k = 0; k < kChats; k++)
                     {
                         string chatId = credentials[0];
