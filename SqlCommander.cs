@@ -626,7 +626,7 @@ namespace shooter_server
                     CultureInfo provider = CultureInfo.InvariantCulture;
                     DateTimeOffset timeMsg = DateTimeOffset.ParseExact(time, format, provider);
 
-                    byte[] msg = Encoding.UTF8.GetBytes(credentials[4]);
+                    byte[] msg = Convert.FromBase64String(credentials[4]);
 
 
                     cursor.Parameters.AddWithValue("idSender", idSender);
