@@ -531,13 +531,13 @@ namespace shooter_server
                             {
                                 //Console.WriteLine(credentials[kek]);
                                 int msss = int.Parse(credentials[0]);
-
                                 credentials.RemoveAt(0);
-                                //cursor.Parameters.AddWithValue("idSender", userId);
-                                //cursor.Parameters.AddWithValue("messageId", msss);
+
+                                cursor.Parameters.AddWithValue("idSender", userId);
+                                cursor.Parameters.AddWithValue("messageId", msss);
 
                                 //Console.WriteLine(userId.ToString() + " " + msss.ToString());
-                                cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = {userId} AND id_msg >= {msss} ORDER BY id_msg ASC";
+                                cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = @idSender AND id_msg >= @messageId ORDER BY id_msg ASC";
 
                                 using (NpgsqlDataReader reader = await cursor.ExecuteReaderAsync())
                                 {
@@ -556,18 +556,18 @@ namespace shooter_server
                                         messages.Add(message);
                                     }
                                 }
-
                             }
 
                             //Console.WriteLine(credentials[kek]);
                             int idMsg = int.Parse(credentials[0]);
                             credentials.RemoveAt(0);
                             // Все айдишники после последнего, включая последнего
-                            //cursor.Parameters.AddWithValue("idSender", userId);
-                            //cursor.Parameters.AddWithValue("messageId", idMsg);
+
+                            cursor.Parameters.AddWithValue("idSender", userId);
+                            cursor.Parameters.AddWithValue("messageId", idMsg);
 
                             //Console.WriteLine(userId.ToString() + " " + idMsg.ToString());
-                            cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = {userId} AND id_msg >= {idMsg} ORDER BY id_msg ASC";
+                            cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = @idSender AND id_msg >= @messageId ORDER BY id_msg ASC";
 
                             using (NpgsqlDataReader reader = await cursor.ExecuteReaderAsync())
                             {
@@ -605,9 +605,6 @@ namespace shooter_server
                 Console.WriteLine($"Error GetMessages command: {e}");
             }
         }
-
-
-
 
 
         // Отправить сообщение +
@@ -652,7 +649,7 @@ namespace shooter_server
 
                     await cursor.ExecuteNonQueryAsync();
 
-                    lobby.SendMessagePlayer($"/ans true", ws, requestId);
+                    lobby.SendMessagePlayer($"true", ws, requestId);
                 }
             }
             catch (Exception e)
