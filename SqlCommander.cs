@@ -344,65 +344,6 @@ namespace shooter_server
         }
 
 
-        // Добавить пользователя в чат без пароля
-        private String addUserToChatWithoutPassword(NpgsqlConnection dbConnection, int idUser, int idChat)
-        {
-            try
-            {
-                using (var cursor = dbConnection.CreateCommand())
-                {
-                    cursor.Parameters.AddWithValue("idChat", idChat);
-
-                    cursor.CommandText = @"SELECT CASE WHEN EXISTS (SELECT 1 FROM chat WHERE idChat = @idChat) THEN 1 ELSE 0 END AS IsMatch;";
-
-                    if (Convert.ToBoolean(cursor.ExecuteScalar()))
-                    {
-                        return "You have successfully entered the chat room";
-                    }
-                    else
-                    {
-                        return "Password or id entered incorrectly";
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"Error addUserToChatWithoutPassword command: {e}");
-                return $"Error addUserToChatWithoutPassword command: {e}";
-            }
-        }
-
-
-        // Добавить пользователя в чат с паролем
-        private String addUserToChatPassworded(NpgsqlConnection dbConnection, int idUser, int idChat, String chatPassword)
-        {
-            try
-            {
-                using (var cursor = dbConnection.CreateCommand())
-                {
-                    cursor.Parameters.AddWithValue("idChat", idChat);
-                    cursor.Parameters.AddWithValue("chatPassword", chatPassword);
-
-                    cursor.CommandText = @"SELECT CASE WHEN EXISTS (SELECT 1 FROM chat WHERE idChat = @idChat AND chatPassword = @chatPassword) THEN 1 ELSE 0 END AS IsMatch;";
-
-                    if (Convert.ToBoolean(cursor.ExecuteScalar()))
-                    {
-                        return "You have successfully entered the chat room";
-                    }
-                    else
-                    {
-                        return "Password or id entered incorrectly";
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"Error addUserToChatPassworded command: {e}");
-                return $"Error addUserToChatPassworded command: {e}";
-            }
-        }
-
-
         // Добавить пользователя в чат
         private async Task addUserToChat(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
@@ -410,41 +351,70 @@ namespace shooter_server
             {
                 using (var cursor = dbConnection.CreateCommand())
                 {
-                    // addUserToChat requestId idUser idChat chatPassword 
+                    int idUser = GenerateUniqueUserId(dbConnection);
+
+                    // addUserToChat requestId idChat chatPassword 
                     List<string> credentials = new List<string>(sqlCommand.Split(' '));
                     credentials.RemoveAt(0);
 
                     int requestId = int.Parse(credentials[0]);
                     credentials.RemoveAt(0);
 
-                    if (credentials.Count == 3)
+                    if (credentials.Count == 2)
                     {
                         // Если чат с паролем
-                        int idUser = int.Parse(credentials[0]);
-                        int idChat = int.Parse(credentials[1]);
-                        String chatPassword = credentials[2];
+                        int idChat = int.Parse(credentials[0]);
+                        String chatPassword = credentials[1];
 
-                        String result = addUserToChatPassworded(dbConnection, idUser, idChat, chatPassword);
+                        cursor.Parameters.AddWithValue("idChat", idChat);
+                        cursor.Parameters.AddWithValue("chatPassword", chatPassword);
 
-                        Console.WriteLine(result);
+                        cursor.CommandText = @"SELECT CASE WHEN EXISTS (SELECT 1 FROM chat WHERE idChat = @idChat AND chatPassword = @chatPassword) THEN 1 ELSE 0 END AS IsMatch;";
 
-                        lobby.SendMessagePlayer(result, ws, requestId);
+                        if (Convert.ToBoolean(cursor.ExecuteScalar()))
+                        {
+                            cursor.Parameters.AddWithValue("idUser", idUser);
+                            cursor.Parameters.AddWithValue("idChat", idChat);
+
+                            cursor.CommandText = @"INSERT INTO users (id_user, id_chat) VALUES (@idUser, @idChat);";
+                            await cursor.ExecuteNonQueryAsync();
+
+                            Console.WriteLine($"Success");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Password or id entered incorrectly");
+                        }                        
                     }
-                    else if (credentials.Count == 3)
+                    else if (credentials.Count == 1)
                     {
-                        int idUser = int.Parse(credentials[0]);
-                        int idChat = int.Parse(credentials[1]);
+                        int idChat = int.Parse(credentials[0]);
 
-                        String result = addUserToChatWithoutPassword(dbConnection, idUser, idChat);
+                        cursor.Parameters.AddWithValue("idChat", idChat);
 
-                        Console.WriteLine(result);
+                        cursor.CommandText = @"SELECT CASE WHEN EXISTS (SELECT 1 FROM chat WHERE idChat = @idChat) THEN 1 ELSE 0 END AS IsMatch;";
 
-                        lobby.SendMessagePlayer(result, ws, requestId);
+                        if (Convert.ToBoolean(cursor.ExecuteScalar()))
+                        {
+                            cursor.Parameters.AddWithValue("idUser", idUser);
+                            cursor.Parameters.AddWithValue("idChat", idChat);
+
+                            cursor.CommandText = @"INSERT INTO users (id_user, id_chat) VALUES (@idUser, @idChat);";
+                            await cursor.ExecuteNonQueryAsync();
+
+                            Console.WriteLine($"Success");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"id entered incorrectly");
+                        }
                     }
                     else
                     {
                         Console.WriteLine($"Id or password has not been entered");
                     }
+
+                    lobby.SendMessagePlayer(idUser.ToString(), ws, requestId);
                 }
             }
             catch (Exception e)
