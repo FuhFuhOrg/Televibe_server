@@ -586,7 +586,7 @@ namespace shooter_server
                     }
 
                     Console.WriteLine(result);
-                    lobby.SendMessagePlayer($"/return {result}", ws, requestId);
+                    lobby.SendMessagePlayer($"{result}", ws, requestId);
                 }
             }
             catch (Exception e)
