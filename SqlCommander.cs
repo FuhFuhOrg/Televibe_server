@@ -603,6 +603,7 @@ namespace shooter_server
                             Console.WriteLine("Error: not enough credentials for chatId");
                             return;
                         }
+
                         string chatId = credentials[0];
                         credentials.RemoveAt(0);
 
@@ -622,9 +623,7 @@ namespace shooter_server
                                 int msss = int.Parse(credentials[0]);
                                 credentials.RemoveAt(0);
 
-                                cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = @userId AND id_msg >= @msss ORDER BY id_msg ASC";
-                                cursor.Parameters.AddWithValue("@userId", userId);
-                                cursor.Parameters.AddWithValue("@msss", msss);
+                                cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = {userId} AND id_msg >= {msss} ORDER BY id_msg ASC";
 
                                 using (NpgsqlDataReader reader = await cursor.ExecuteReaderAsync())
                                 {
@@ -646,8 +645,7 @@ namespace shooter_server
                             credentials.RemoveAt(0);
 
                             // Все айдишники после последнего, включая последнего
-                            cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = @userId AND id_msg >= @idMsg ORDER BY id_msg ASC";
-                            cursor.Parameters.AddWithValue("@idMsg", idMsg);
+                            cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = {userId} AND id_msg >= {idMsg} ORDER BY id_msg ASC";
 
                             using (NpgsqlDataReader reader = await cursor.ExecuteReaderAsync())
                             {
@@ -683,7 +681,6 @@ namespace shooter_server
                 Console.WriteLine($"Error GetMessages command: {e}");
             }
         }
-
 
 
         // Отправить сообщение +
