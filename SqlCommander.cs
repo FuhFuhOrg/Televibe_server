@@ -355,6 +355,8 @@ namespace shooter_server
             {
                 using (var cursor = dbConnection.CreateCommand())
                 {
+                    Console.WriteLine(sqlCommand);
+
                     int idUser = GenerateUniqueUserId(dbConnection);
                     string fullIdChat = "";
 
