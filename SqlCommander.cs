@@ -298,7 +298,6 @@ namespace shooter_server
                     int requestId = int.Parse(credentials[0]);
                     string chatPassword = credentials[1];
                     bool isPrivacy = bool.Parse(credentials[2]);
-                    string publicKey = credentials[3];
 
                     string idChat = GenerateUniqueChatId(dbConnection);
 
@@ -322,7 +321,7 @@ namespace shooter_server
 
 
         // Создание нового юзера +
-        private async Task UserCreate(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws, int requestId, string idChat, string publicKey)
+        private async Task UserCreate(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws, int requestId, string idChat)
         {
             try
             {
@@ -332,9 +331,8 @@ namespace shooter_server
 
                     cursor.Parameters.AddWithValue("idUser", idUser);
                     cursor.Parameters.AddWithValue("idChat", idChat);
-                    cursor.Parameters.AddWithValue("publicKey", publicKey);
 
-                    cursor.CommandText = @"INSERT INTO users (id_user, id_chat, public_key) VALUES (@idUser, @idChat, @publicKey);";
+                    cursor.CommandText = @"INSERT INTO users (id_user, id_chat) VALUES (@idUser, @idChat);";
                     await cursor.ExecuteNonQueryAsync();
                     
                     Console.WriteLine("User Added");
