@@ -639,29 +639,29 @@ namespace shooter_server
             {
                 var credentials = sqlCommand.Split(' ').Skip(1).ToList();
                 int requestId = int.Parse(credentials[0]);
-                long kChats = long.Parse(credentials[1]);
+                long chatCount = long.Parse(credentials[1]);
                 int index = 2;
 
                 List<Message> messages = new List<Message>();
 
-                for (int k = 0; k < kChats; k++)
+                for (int chatIndex = 0; chatIndex < chatCount; chatIndex++)
                 {
                     string chatId = credentials[index++];
-                    long kSender = long.Parse(credentials[index++]);
-                    List<int> allUsersInChat = GetAllUsersInChat(dbConnection, chatId);
+                    long senderCount = long.Parse(credentials[index++]);
+                    List<int> allUsersInChat = await GetAllUsersInChatAsync(dbConnection, chatId);
 
-                    for (int i = 0; i < kSender; i++)
+                    for (int senderIndex = 0; senderIndex < senderCount; senderIndex++)
                     {
                         int userId = int.Parse(credentials[index++]);
-                        int kMsg = int.Parse(credentials[index++]);
+                        int messageCount = int.Parse(credentials[index++]);
 
                         byte[] publicKey = await GetPublicKeyAsync(dbConnection, userId, chatId);
                         allUsersInChat.Remove(userId);
 
-                        messages.AddRange(await GetMessagesForUser(dbConnection, userId, kMsg, credentials, ref index, chatId, publicKey));
+                        messages.AddRange(await GetMessagesForUserAsync(dbConnection, userId, messageCount, credentials, chatId, publicKey, ref index));
                     }
 
-                    messages.AddRange(await GetRemainingUserMessages(dbConnection, allUsersInChat, chatId));
+                    messages.AddRange(await GetRemainingUserMessagesAsync(dbConnection, allUsersInChat, chatId));
                 }
 
                 string result = string.Join("", messages.Select(m => m.GetString()));
@@ -676,13 +676,13 @@ namespace shooter_server
 
         private async Task<byte[]> GetPublicKeyAsync(NpgsqlConnection dbConnection, int userId, string chatId)
         {
-            using (var cursor = dbConnection.CreateCommand())
+            using (var command = dbConnection.CreateCommand())
             {
-                cursor.CommandText = $"SELECT public_key FROM users WHERE id_user = @userId AND id_chat = @chatId";
-                cursor.Parameters.AddWithValue("@userId", userId);
-                cursor.Parameters.AddWithValue("@chatId", chatId);
+                command.CommandText = "SELECT public_key FROM users WHERE id_user = @userId AND id_chat = @chatId";
+                command.Parameters.AddWithValue("@userId", userId);
+                command.Parameters.AddWithValue("@chatId", chatId);
 
-                using (NpgsqlDataReader reader = await cursor.ExecuteReaderAsync())
+                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
                 {
                     if (await reader.ReadAsync())
                     {
@@ -690,28 +690,28 @@ namespace shooter_server
                     }
                     else
                     {
-                        Console.WriteLine($"user's public_key not found for user {userId} in chat {chatId}");
+                        Console.WriteLine($"User's public key not found for user {userId} in chat {chatId}");
                         return Array.Empty<byte>();
                     }
                 }
             }
         }
 
-        private async Task<List<Message>> GetMessagesForUser(NpgsqlConnection dbConnection, int userId, int kMsg, List<string> credentials, ref int index, string chatId, byte[] publicKey)
+        private async Task<List<Message>> GetMessagesForUserAsync(NpgsqlConnection dbConnection, int userId, int messageCount, List<string> credentials, string chatId, byte[] publicKey, ref int index)
         {
             List<Message> messages = new List<Message>();
 
-            using (var cursor = dbConnection.CreateCommand())
+            using (var command = dbConnection.CreateCommand())
             {
-                for (int j = 0; j < kMsg; j++)
+                for (int messageIndex = 0; messageIndex < messageCount; messageIndex++)
                 {
                     int msgId = int.Parse(credentials[index++]);
-                    cursor.CommandText = $"SELECT id_msg, id_sender, time_msg, msg FROM messages WHERE id_sender = @userId AND id_msg = @msgId ORDER BY id_msg ASC";
-                    cursor.Parameters.Clear();
-                    cursor.Parameters.AddWithValue("@userId", userId);
-                    cursor.Parameters.AddWithValue("@msgId", msgId);
+                    command.CommandText = "SELECT id_msg, id_sender, time_msg, msg FROM messages WHERE id_sender = @userId AND id_msg = @msgId ORDER BY id_msg ASC";
+                    command.Parameters.Clear();
+                    command.Parameters.AddWithValue("@userId", userId);
+                    command.Parameters.AddWithValue("@msgId", msgId);
 
-                    using (NpgsqlDataReader reader = await cursor.ExecuteReaderAsync())
+                    using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
                     {
                         while (await reader.ReadAsync())
                         {
@@ -732,7 +732,7 @@ namespace shooter_server
             return messages;
         }
 
-        private async Task<List<Message>> GetRemainingUserMessages(NpgsqlConnection dbConnection, List<int> allUsersInChat, string chatId)
+        private async Task<List<Message>> GetRemainingUserMessagesAsync(NpgsqlConnection dbConnection, List<int> allUsersInChat, string chatId)
         {
             List<Message> messages = new List<Message>();
 
@@ -740,13 +740,13 @@ namespace shooter_server
             {
                 byte[] publicKey = await GetPublicKeyAsync(dbConnection, userId, chatId);
 
-                using (var cursor = dbConnection.CreateCommand())
+                using (var command = dbConnection.CreateCommand())
                 {
-                    cursor.CommandText = $"SELECT id_msg, id_sender, time_msg, msg FROM messages WHERE id_sender = @userId";
-                    cursor.Parameters.Clear();
-                    cursor.Parameters.AddWithValue("@userId", userId);
+                    command.CommandText = "SELECT id_msg, id_sender, time_msg, msg FROM messages WHERE id_sender = @userId";
+                    command.Parameters.Clear();
+                    command.Parameters.AddWithValue("@userId", userId);
 
-                    using (NpgsqlDataReader reader = await cursor.ExecuteReaderAsync())
+                    using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
                     {
                         if (reader.HasRows)
                         {
@@ -782,19 +782,18 @@ namespace shooter_server
             return messages;
         }
 
-        // Возврат всех пользователей по idChat
-        private List<int> GetAllUsersInChat(NpgsqlConnection dbConnection, string chatId)
+        private async Task<List<int>> GetAllUsersInChatAsync(NpgsqlConnection dbConnection, string chatId)
         {
             List<int> userIds = new List<int>();
 
-            using (var cursor = dbConnection.CreateCommand())
+            using (var command = dbConnection.CreateCommand())
             {
-                cursor.CommandText = $"SELECT id_user FROM chat_users WHERE id_chat = @chatId";
-                cursor.Parameters.AddWithValue("@chatId", chatId);
+                command.CommandText = "SELECT id_user FROM chat_users WHERE id_chat = @chatId";
+                command.Parameters.AddWithValue("@chatId", chatId);
 
-                using (NpgsqlDataReader reader = cursor.ExecuteReader())
+                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
                 {
-                    while (reader.Read())
+                    while (await reader.ReadAsync())
                     {
                         userIds.Add(reader.GetInt32(0));
                     }
@@ -803,6 +802,7 @@ namespace shooter_server
 
             return userIds;
         }
+
 
 
 

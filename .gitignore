@@ -9,3 +9,4 @@
 *.futdcache.v2
 obj/Debug/net8.0/shooter_server.GeneratedMSBuildEditorConfig.editorconfig
 obj/Debug/net8.0/shooter_server.AssemblyInfo.cs
+.vs/shooter_server/DesignTimeBuild/.dtbcache.v2
