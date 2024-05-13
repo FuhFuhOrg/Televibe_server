@@ -133,7 +133,6 @@ namespace shooter_server
                                 id_msg = reader.GetInt32(1),
                                 time_msg = reader.GetDateTime(2),
                                 msg = reader.GetFieldValue<byte[]>(3),
-                                public_key = reader.GetFieldValue<byte[]>(4)
                             };
 
                             result += message.GetString();
@@ -659,6 +658,8 @@ namespace shooter_server
             {
                 using (var cursor = dbConnection.CreateCommand())
                 {
+                    byte[] publicKey = Array.Empty<byte>();
+
                     List<string> credentials = new List<string>(sqlCommand.Split(' '));
                     credentials.RemoveAt(0);
 
@@ -666,22 +667,42 @@ namespace shooter_server
 
                     int requestId = int.Parse(credentials[0]);
                     long kChats = long.Parse(credentials[1]);
+
                     int kek = 2;
 
                     for (int k = 0; k < kChats; k++)
                     {
                         string chatId = credentials[kek];
-                        List<int> allUsersInChat = GetAllUsersInChat(dbConnection, chatId);
                         kek++;
+
                         long kSender = long.Parse(credentials[kek]);
                         kek++;
+
+                        List<int> allUsersInChat = GetAllUsersInChat(dbConnection, chatId);
 
                         for (int i = 0; i < kSender; i++)
                         {
                             int userId = int.Parse(credentials[kek]);
                             kek++;
+
                             int kMsg = int.Parse(credentials[kek]);
                             kek++;
+
+                            cursor.CommandText = $"SELECT public_key FROM users WHERE id_user = {userId} AND id_chat = '{chatId}'";
+                            cursor.ExecuteNonQuery();
+
+                            using (NpgsqlDataReader reader = await cursor.ExecuteReaderAsync())
+                            {
+                                if (await reader.ReadAsync())
+                                {
+                                    publicKey = reader.GetFieldValue<byte[]>(0);
+                                }
+                                else
+                                {
+                                    Console.WriteLine($"user's public_key not found");
+                                }
+                            }
+
 
                             // Удаление лишнего пользователя, чтобы не повторялся
                             allUsersInChat.Remove(userId);
@@ -690,6 +711,7 @@ namespace shooter_server
                             {
                                 int msss = int.Parse(credentials[kek]);
                                 kek++;
+
                                 cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = {userId} AND id_msg >= {msss} ORDER BY id_msg ASC";
                                 cursor.ExecuteNonQuery();
 
@@ -703,7 +725,7 @@ namespace shooter_server
                                             id_msg = reader.GetInt32(1),
                                             time_msg = reader.GetDateTime(2),
                                             msg = reader.GetFieldValue<byte[]>(3),
-                                            public_key = reader.GetFieldValue<byte[]>(4)
+                                            public_key = publicKey
                                         };
                                         messages.Add(message);
                                     }
@@ -712,6 +734,7 @@ namespace shooter_server
 
                             int idMsg = int.Parse(credentials[kek]);
                             kek++;
+
                             cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = {userId} AND id_msg >= {idMsg} ORDER BY id_msg ASC";
                             cursor.ExecuteNonQuery();
 
@@ -726,17 +749,32 @@ namespace shooter_server
                                         id_sender = reader.GetInt32(1),
                                         time_msg = reader.GetDateTime(2),
                                         msg = reader.GetFieldValue<byte[]>(3),
-                                        public_key = reader.GetFieldValue<byte[]>(4)
+                                        public_key = publicKey
                                     };
                                     messages.Add(message);
                                 }
                             }
                         }
 
-                        // Возврат всех пользователей, которые не передали в виде параметра
+                        // Возврат всех пользователей, которых не передали в виде параметра
                         for (int i = 0; i < allUsersInChat.Count; i++)
                         {
                             int userId = allUsersInChat[i];
+
+                            cursor.CommandText = $"SELECT public_key FROM users WHERE id_user = {userId} AND id_chat = '{chatId}'";
+                            cursor.ExecuteNonQuery();
+
+                            using (NpgsqlDataReader reader = await cursor.ExecuteReaderAsync())
+                            {
+                                if (await reader.ReadAsync())
+                                {
+                                    publicKey = reader.GetFieldValue<byte[]>(0);
+                                }
+                                else
+                                {
+                                    Console.WriteLine($"user's public_key not found");
+                                }
+                            }
 
                             cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = {userId};";
                             cursor.ExecuteNonQuery();
@@ -754,7 +792,7 @@ namespace shooter_server
                                             id_sender = reader.GetInt32(1),
                                             time_msg = reader.GetDateTime(2),
                                             msg = reader.GetFieldValue<byte[]>(3),
-                                            public_key = reader.GetFieldValue<byte[]>(4)
+                                            public_key = publicKey
                                         };
                                         messages.Add(message);
                                     }
