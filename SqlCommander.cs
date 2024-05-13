@@ -132,7 +132,8 @@ namespace shooter_server
                                 id_sender = reader.GetInt32(0),
                                 id_msg = reader.GetInt32(1),
                                 time_msg = reader.GetDateTime(2),
-                                msg = reader.GetFieldValue<byte[]>(3)
+                                msg = reader.GetFieldValue<byte[]>(3),
+                                public_key = reader.GetFieldValue<byte[]>(4)
                             };
 
                             result += message.GetString();
@@ -702,6 +703,7 @@ namespace shooter_server
                                             id_msg = reader.GetInt32(1),
                                             time_msg = reader.GetDateTime(2),
                                             msg = reader.GetFieldValue<byte[]>(3),
+                                            public_key = reader.GetFieldValue<byte[]>(4)
                                         };
                                         messages.Add(message);
                                     }
@@ -724,6 +726,7 @@ namespace shooter_server
                                         id_sender = reader.GetInt32(1),
                                         time_msg = reader.GetDateTime(2),
                                         msg = reader.GetFieldValue<byte[]>(3),
+                                        public_key = reader.GetFieldValue<byte[]>(4)
                                     };
                                     messages.Add(message);
                                 }
@@ -751,6 +754,7 @@ namespace shooter_server
                                             id_sender = reader.GetInt32(1),
                                             time_msg = reader.GetDateTime(2),
                                             msg = reader.GetFieldValue<byte[]>(3),
+                                            public_key = reader.GetFieldValue<byte[]>(4)
                                         };
                                         messages.Add(message);
                                     }
@@ -764,7 +768,8 @@ namespace shooter_server
                                         id_msg = 0,
                                         id_sender = userId,
                                         time_msg = DateTime.MinValue,
-                                        msg = new byte[0],
+                                        msg = Array.Empty<byte>(),
+                                        public_key = Array.Empty<byte>()
                                     };
                                     messages.Add(message);
                                 }
