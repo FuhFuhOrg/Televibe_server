@@ -588,6 +588,7 @@ namespace shooter_server
 
             using (var command = new NpgsqlCommand($"SELECT id_user FROM users WHERE id_chat = {chatId}", dbConnection))
             {
+                command.ExecuteNonQuery();
                 using (var reader = command.ExecuteReader())
                 {
                     while (reader.Read())
@@ -599,7 +600,6 @@ namespace shooter_server
 
             return allUsersInChat;
         }
-
 
         // Вернуть сообщения, которые больше id_msg +
         private async Task GetMessages(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
@@ -649,6 +649,7 @@ namespace shooter_server
 
                                 //Console.WriteLine(userId.ToString() + " " + msss.ToString());
                                 cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = {userId} AND id_msg >= {msss} ORDER BY id_msg ASC";
+                                cursor.ExecuteNonQuery();
 
                                 using (NpgsqlDataReader reader = await cursor.ExecuteReaderAsync())
                                 {
@@ -679,6 +680,7 @@ namespace shooter_server
 
                             //Console.WriteLine(userId.ToString() + " " + idMsg.ToString());
                             cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = {userId} AND id_msg >= {idMsg} ORDER BY id_msg ASC";
+                            cursor.ExecuteNonQuery();
 
                             using (NpgsqlDataReader reader = await cursor.ExecuteReaderAsync())
                             {
@@ -706,6 +708,7 @@ namespace shooter_server
                             string userId = allUsersInChat[i];
 
                             cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = {userId};";
+                            cursor.ExecuteNonQuery();
 
                             using (NpgsqlDataReader reader = await cursor.ExecuteReaderAsync())
                             {
