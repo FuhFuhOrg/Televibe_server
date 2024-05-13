@@ -283,21 +283,22 @@ namespace shooter_server
         }
 
 
-        // Создание нового чата +
+        // Создание нового чата 
         private async Task ChatCreate(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
             try
             {
                 using (var cursor = dbConnection.CreateCommand())
                 {
-                    // ChatCreate requestId chatPassword isPrivacy
+                    // ChatCreate requestId chatPassword isPrivacy publicKey
                     List<string> credentials = new List<string>(sqlCommand.Split(' '));
 
                     credentials.RemoveAt(0);
 
                     int requestId = int.Parse(credentials[0]);
-                    string chatPassword = credentials[1];
-                    bool isPrivacy = bool.Parse(credentials[2]);
+                    bool isPrivacy = bool.Parse(credentials[1]);
+                    byte[] publicKey = Convert.FromBase64String(credentials[2]);
+                    String chatPassword = credentials.Count == 4 ? credentials[3] : "";
 
                     string idChat = GenerateUniqueChatId(dbConnection);
 
@@ -310,7 +311,7 @@ namespace shooter_server
 
                     Console.WriteLine("Chat Created");
 
-                    await UserCreate(sqlCommand, senderId, dbConnection, lobby, ws, requestId, idChat);
+                    await UserCreate(sqlCommand, senderId, dbConnection, lobby, ws, requestId, idChat, publicKey);
                 }
             }
             catch (Exception e)
@@ -320,8 +321,8 @@ namespace shooter_server
         }
 
 
-        // Создание нового юзера +
-        private async Task UserCreate(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws, int requestId, string idChat)
+        // Создание нового юзера
+        private async Task UserCreate(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws, int requestId, string idChat, byte[] publicKey)
         {
             try
             {
@@ -331,8 +332,9 @@ namespace shooter_server
 
                     cursor.Parameters.AddWithValue("idUser", idUser);
                     cursor.Parameters.AddWithValue("idChat", idChat);
+                    cursor.Parameters.AddWithValue("publicKey", publicKey);
 
-                    cursor.CommandText = @"INSERT INTO users (id_user, id_chat) VALUES (@idUser, @idChat);";
+                    cursor.CommandText = @"INSERT INTO users (id_user, id_chat, public_key) VALUES (@idUser, @idChat, @publicKey);";
                     await cursor.ExecuteNonQueryAsync();
                     
                     Console.WriteLine("User Added");
@@ -360,11 +362,14 @@ namespace shooter_server
                     int idUser = GenerateUniqueUserId(dbConnection);
                     string fullIdChat = "";
 
-                    // addUserToChat requestId idChat chatPassword 
+                    // addUserToChat requestId publicKey idChat chatPassword 
                     List<string> credentials = new List<string>(sqlCommand.Split(' '));
                     credentials.RemoveAt(0);
 
                     int requestId = int.Parse(credentials[0]);
+                    credentials.RemoveAt(0);
+
+                    byte[] publicKey = Convert.FromBase64String(credentials[0]);
                     credentials.RemoveAt(0);
 
                     if (credentials.Count == 2 || credentials.Count == 1)
@@ -398,8 +403,9 @@ namespace shooter_server
                                     {
                                         insertCommand.Parameters.AddWithValue("idUser", idUser);
                                         insertCommand.Parameters.AddWithValue("idChat", fullIdChat);
+                                        insertCommand.Parameters.AddWithValue("publicKey", publicKey);
 
-                                        insertCommand.CommandText = @"INSERT INTO users (id_user, id_chat) VALUES (@idUser, @idChat);";
+                                        insertCommand.CommandText = @"INSERT INTO users (id_user, id_chat, public_key) VALUES (@idUser, @idChat, @publicKey);";
 
                                         await insertCommand.ExecuteNonQueryAsync();
 
@@ -429,7 +435,7 @@ namespace shooter_server
         }
 
 
-        // Изменение сообщения +
+        // Изменение сообщения
         private async Task RefactorMessage(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
             try
@@ -496,7 +502,7 @@ namespace shooter_server
         }
 
 
-        // Удаление сообщения +
+        // Удаление сообщения
         private async Task DeleteMessage(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
             try
@@ -601,7 +607,7 @@ namespace shooter_server
             return allUsersInChat;
         }
 
-        // Вернуть сообщения, которые больше id_msg +
+        // Вернуть сообщения
         private async Task GetMessages(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
             try
@@ -739,7 +745,7 @@ namespace shooter_server
         }
 
 
-        // Отправить сообщение +
+        // Отправить сообщение
         private async Task SendMessage(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
             try
