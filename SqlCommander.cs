@@ -83,6 +83,9 @@ namespace shooter_server
                         case string s when s.StartsWith("ReturnMessageByKeyWord"):
                             await Task.Run(() => ReturnMessageByKeyWord(sqlCommand, senderId, dbConnection, lobby, webSocket));
                             break;
+                        case string s when s.StartsWith("GetPublicKeys"):
+                            await Task.Run(() => GetPublicKeys(sqlCommand, senderId, dbConnection, lobby, webSocket));
+                            break;
                         case string s when s.StartsWith("ReturnMessageByIdMsg"):
                             await Task.Run(() => ReturnMessageByIdMsg(sqlCommand, senderId, dbConnection, lobby, webSocket));
                             break;
@@ -99,7 +102,7 @@ namespace shooter_server
         }
 
 
-        // Возврат сообщения по idMsg +
+        // Возврат сообщения по idMsg
         private async Task ReturnMessageByIdMsg(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
             try
@@ -146,7 +149,7 @@ namespace shooter_server
         }
 
 
-        // Поиск сообщения по ключу в msg +
+        // Поиск сообщения по ключу в msg
         private async Task ReturnMessageByKeyWord(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
             using (var cursor = dbConnection.CreateCommand())
@@ -193,6 +196,47 @@ namespace shooter_server
                 {
                     Console.WriteLine($"Error RefactorMessage command: {e}");
                 }
+            }
+        }
+
+        
+        // Получение ключей по айди
+        private async Task GetPublicKeys(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
+        {
+            try
+            {
+                using (var cursor = dbConnection.CreateCommand())
+                {
+                    // GetPublicKeys requestId chatId
+                    List<string> credentials = new List<string>(sqlCommand.Split(' '));
+
+                    credentials.RemoveAt(0);
+
+                    int requestId = int.Parse(credentials[0]);
+                    string chatId = credentials[1];
+
+                    cursor.Parameters.AddWithValue("chatId", chatId);
+
+                    cursor.CommandText = @"SELECT * FROM users
+                                    WHERE id_chat = @idChat;";
+
+                    string result = "";
+
+                    using (var reader = await cursor.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            result += reader.GetInt32(0).ToString() + " ";
+                            result += reader.GetFieldValue<byte[]>(1).ToString() + " ";
+                        }
+                    }
+
+                    lobby.SendMessagePlayer($"{result}", ws, requestId);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error ReturnLastKMessages command: {e}");
             }
         }
 
