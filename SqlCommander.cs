@@ -655,7 +655,14 @@ namespace shooter_server
 
                                 using (NpgsqlDataReader reader = await cursor.ExecuteReaderAsync())
                                 {
-                                    Console.WriteLine(reader.ToString());
+
+
+
+                                    //Console.WriteLine(reader.ToString());
+
+
+
+
                                     while (await reader.ReadAsync())
                                     {
                                         Message message = new Message
@@ -666,7 +673,14 @@ namespace shooter_server
                                             msg = reader.GetFieldValue<byte[]>(3),
                                         };
 
-                                        Console.WriteLine(message.ToString());
+
+
+
+                                        //Console.WriteLine(message.ToString());
+
+
+
+
                                         messages.Add(message);
                                     }
                                 }
@@ -686,7 +700,14 @@ namespace shooter_server
 
                             using (NpgsqlDataReader reader = await cursor.ExecuteReaderAsync())
                             {
-                                Console.WriteLine(reader.ToString());
+
+
+
+                                //Console.WriteLine(reader.ToString());
+
+
+
+
                                 while (await reader.ReadAsync())
                                 {
                                     Message message = new Message
@@ -714,7 +735,16 @@ namespace shooter_server
 
                             using (NpgsqlDataReader reader = await cursor.ExecuteReaderAsync())
                             {
-                                Console.WriteLine(reader.ToString());
+
+
+
+
+                                //Console.WriteLine(reader.ToString());
+
+
+
+
+
                                 while (await reader.ReadAsync())
                                 {
                                     Message message = new Message
