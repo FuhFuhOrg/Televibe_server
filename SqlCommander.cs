@@ -582,9 +582,9 @@ namespace shooter_server
 
 
         // Возврат всех пользователей по idChat
-        private List<int> GetAllUsersInChat(NpgsqlConnection dbConnection, string chatId)
+        private List<string> GetAllUsersInChat(NpgsqlConnection dbConnection, string chatId)
         {
-            List<int> allUsersInChat = new List<int>();
+            List<string> allUsersInChat = new List<string>();
 
             using (var command = new NpgsqlCommand($"SELECT id_user FROM users WHERE id_chat = {chatId}", dbConnection))
             {
@@ -592,7 +592,7 @@ namespace shooter_server
                 {
                     while (reader.Read())
                     {
-                        allUsersInChat.Add(reader.GetInt32(0));
+                        allUsersInChat.Add(reader.GetInt32(0).ToString());
                     }
                 }
             }
@@ -622,7 +622,7 @@ namespace shooter_server
                     {
                         //Console.WriteLine(credentials[kek]);
                         string chatId = credentials[kek];
-                        List<int> allUsersInChat = GetAllUsersInChat(dbConnection, chatId);
+                        List<string> allUsersInChat = GetAllUsersInChat(dbConnection, chatId);
                         kek++;
                         //Console.WriteLine(credentials[kek]);
                         long kSender = long.Parse(credentials[kek]);
@@ -637,7 +637,7 @@ namespace shooter_server
                             kek++;
 
                             // Удаление лишнего пользователя, чтобы не повторялся
-                            allUsersInChat.Remove(userId);
+                            allUsersInChat.Remove(userId.ToString());
 
                             for (int j = 0; j < kMsg - 1; ++j)
                             {
@@ -703,7 +703,7 @@ namespace shooter_server
                         // Возврат всех пользователей, которые не передали в виде параметра
                         for (int i = 0; i < allUsersInChat.Count; i++)
                         {
-                            int userId = allUsersInChat[i];
+                            string userId = allUsersInChat[i];
 
                             cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = {userId};";
 
