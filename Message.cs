@@ -17,7 +17,7 @@ namespace shooter_server
 
         public string GetString()
         {
-            string base64Msg = msg.Length > 0 ? Convert.ToBase64String(msg) : "-";
+            string base64Msg = msg.Length > 0 ? Convert.ToBase64String(msg) : "+";
             string base64PublicKey = public_key.Length > 0 ? Convert.ToBase64String(public_key) : "-";
             return $"{id_chat} {id_sender} {id_msg} {time_msg.ToString("dd.MM.yyyy HH:mm:ss")} {base64Msg} {base64PublicKey} ";
         }
