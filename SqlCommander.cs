@@ -608,6 +608,8 @@ namespace shooter_server
             {
                 using (var cursor = dbConnection.CreateCommand())
                 {
+                    Console.WriteLine(sqlCommand);
+
                     // GetMessages requestId kSenderId senderId[kSenderId] kIdMsg idMsg[kIdMsg]
                     List<string> credentials = new List<string>(sqlCommand.Split(' '));
 
