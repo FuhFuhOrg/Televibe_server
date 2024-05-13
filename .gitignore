@@ -10,3 +10,13 @@
 obj/Debug/net8.0/shooter_server.GeneratedMSBuildEditorConfig.editorconfig
 obj/Debug/net8.0/shooter_server.AssemblyInfo.cs
 .vs/shooter_server/DesignTimeBuild/.dtbcache.v2
+obj/Debug/net8.0/shooter_server.pdb
+obj/Debug/net8.0/shooter_server.dll
+obj/Debug/net8.0/shooter_server.csproj.BuildWithSkipAnalyzers
+obj/Debug/net8.0/shooter_server.AssemblyInfo.cs
+obj/Debug/net8.0/refint/shooter_server.dll
+obj/Debug/net8.0/ref/shooter_server.dll
+obj/Debug/net8.0/apphost.exe
+bin/Debug/net8.0/shooter_server.pdb
+bin/Debug/net8.0/shooter_server.exe
+bin/Debug/net8.0/shooter_server.dll

@@ -658,10 +658,14 @@ namespace shooter_server
                         byte[] publicKey = await GetPublicKeyAsync(dbConnection, userId, chatId);
                         allUsersInChat.Remove(userId);
 
-                        messages.AddRange(await GetMessagesForUserAsync(dbConnection, userId, messageCount, credentials, chatId, publicKey, ref index));
+                        var userMessages = await GetMessagesForUserAsync(dbConnection, userId, messageCount, credentials, chatId, publicKey, index);
+                        messages.AddRange(userMessages);
+
+                        index += messageCount; // Перемещаем индекс после обработки сообщений
                     }
 
-                    messages.AddRange(await GetRemainingUserMessagesAsync(dbConnection, allUsersInChat, chatId));
+                    var remainingMessages = await GetRemainingUserMessagesAsync(dbConnection, allUsersInChat, chatId);
+                    messages.AddRange(remainingMessages);
                 }
 
                 string result = string.Join("", messages.Select(m => m.GetString()));
@@ -690,14 +694,14 @@ namespace shooter_server
                     }
                     else
                     {
-                        Console.WriteLine($"User's public key not found for user {userId} in chat {chatId}");
+                        Console.WriteLine($"Public key не найден для пользователя {userId} в чате {chatId}");
                         return Array.Empty<byte>();
                     }
                 }
             }
         }
 
-        private async Task<List<Message>> GetMessagesForUserAsync(NpgsqlConnection dbConnection, int userId, int messageCount, List<string> credentials, string chatId, byte[] publicKey, ref int index)
+        private async Task<List<Message>> GetMessagesForUserAsync(NpgsqlConnection dbConnection, int userId, int messageCount, List<string> credentials, string chatId, byte[] publicKey, int startIndex)
         {
             List<Message> messages = new List<Message>();
 
@@ -705,7 +709,7 @@ namespace shooter_server
             {
                 for (int messageIndex = 0; messageIndex < messageCount; messageIndex++)
                 {
-                    int msgId = int.Parse(credentials[index++]);
+                    int msgId = int.Parse(credentials[startIndex + messageIndex]);
                     command.CommandText = "SELECT id_msg, id_sender, time_msg, msg FROM messages WHERE id_sender = @userId AND id_msg = @msgId ORDER BY id_msg ASC";
                     command.Parameters.Clear();
                     command.Parameters.AddWithValue("@userId", userId);
@@ -802,6 +806,7 @@ namespace shooter_server
 
             return userIds;
         }
+
 
 
 
