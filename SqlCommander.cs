@@ -692,29 +692,18 @@ namespace shooter_server
                             {
                                 if (reader.HasRows)
                                 {
-                                    // Если у пользователя нет сообщений, добавляем пустое сообщение
-                                    Message message = new Message
+                                    while (await reader.ReadAsync())
                                     {
-                                        id_chat = chatId,
-                                        id_msg = 0,
-                                        id_sender = userId,
-                                        time_msg = DateTime.MinValue,
-                                        msg = new byte[0],
-                                    };
-                                    messages.Add(message);
-
-                                    //while (await reader.ReadAsync())
-                                    //{
-                                    //    Message message = new Message
-                                    //    {
-                                    //        id_chat = chatId,
-                                    //        id_msg = reader.GetInt32(0),
-                                    //        id_sender = reader.GetInt32(1),
-                                    //        time_msg = reader.GetDateTime(2),
-                                    //        msg = reader.GetFieldValue<byte[]>(3),
-                                    //    };
-                                    //    messages.Add(message);
-                                    //}
+                                        Message message = new Message
+                                        {
+                                            id_chat = chatId,
+                                            id_msg = reader.GetInt32(0),
+                                            id_sender = reader.GetInt32(1),
+                                            time_msg = reader.GetDateTime(2),
+                                            msg = reader.GetFieldValue<byte[]>(3),
+                                        };
+                                        messages.Add(message);
+                                    }
                                 }
                                 else
                                 {
