@@ -14,12 +14,13 @@ namespace shooter_server
     class WebSocketServerExample
     {
         private static int kilobite = 1024;
-        private static int buffer = kilobite * 64;
+        private static int buffer;
         private static Lobby mainLobby = new Lobby();
 
         static async Task Main()
         {
             Console.WriteLine("START");
+            buffer = kilobite * 64;
             int port = 17825;
             HttpListener httpListener = new HttpListener();
             httpListener.Prefixes.Add($"http://+:{port}/");
