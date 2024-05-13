@@ -14,13 +14,12 @@ namespace shooter_server
     class WebSocketServerExample
     {
         private static int kilobite = 1024;
-        private static int buffer;
+        private static int bufferSize = kilobite * 64;
         private static Lobby mainLobby = new Lobby();
 
         static async Task Main()
         {
             Console.WriteLine("START");
-            buffer = kilobite * 64;
             int port = 17825;
             HttpListener httpListener = new HttpListener();
             httpListener.Prefixes.Add($"http://+:{port}/");
@@ -51,7 +50,7 @@ namespace shooter_server
 
                 await NotifyClients($"{context.Request.RemoteEndPoint} has joined.");
 
-                byte[] buffer = new byte[buffer];
+                byte[] buffer = new byte[bufferSize];
                 WebSocketReceiveResult result;
 
                 do
