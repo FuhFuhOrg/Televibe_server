@@ -586,7 +586,7 @@ namespace shooter_server
         {
             List<string> allUsersInChat = new List<string>();
 
-            using (var command = new NpgsqlCommand($"SELECT id_user FROM users WHERE id_chat = {chatId}", dbConnection))
+            using (var command = new NpgsqlCommand($"SELECT id_user FROM users WHERE id_chat = '{chatId}'", dbConnection))
             {
                 command.ExecuteNonQuery();
                 using (var reader = command.ExecuteReader())
