@@ -581,6 +581,26 @@ namespace shooter_server
         }
 
 
+        // Возврат всех пользователей по idChat
+        private List<int> GetAllUsersInChat(NpgsqlConnection dbConnection, string chatId)
+        {
+            List<int> allUsersInChat = new List<int>();
+
+            using (var command = new NpgsqlCommand($"SELECT id_user FROM users WHERE id_chat = {chatId}", dbConnection))
+            {
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        allUsersInChat.Add(reader.GetInt32(0));
+                    }
+                }
+            }
+
+            return allUsersInChat;
+        }
+
+
         // Вернуть сообщения, которые больше id_msg +
         private async Task GetMessages(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
@@ -602,6 +622,7 @@ namespace shooter_server
                     {
                         //Console.WriteLine(credentials[kek]);
                         string chatId = credentials[kek];
+                        List<int> allUsersInChat = GetAllUsersInChat(dbConnection, chatId);
                         kek++;
                         //Console.WriteLine(credentials[kek]);
                         long kSender = long.Parse(credentials[kek]);
@@ -614,6 +635,10 @@ namespace shooter_server
                             //Console.WriteLine(credentials[kek]);
                             int kMsg = int.Parse(credentials[kek]);
                             kek++;
+
+                            // Удаление лишнего пользователя, чтобы не повторялся
+                            allUsersInChat.Remove(userId);
+
                             for (int j = 0; j < kMsg - 1; ++j)
                             {
                                 //Console.WriteLine(credentials[kek]);
@@ -654,6 +679,33 @@ namespace shooter_server
 
                             //Console.WriteLine(userId.ToString() + " " + idMsg.ToString());
                             cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = {userId} AND id_msg >= {idMsg} ORDER BY id_msg ASC";
+
+                            using (NpgsqlDataReader reader = await cursor.ExecuteReaderAsync())
+                            {
+                                Console.WriteLine(reader.ToString());
+                                while (await reader.ReadAsync())
+                                {
+                                    Message message = new Message
+                                    {
+                                        id_chat = chatId,
+                                        id_msg = reader.GetInt32(0),
+                                        id_sender = reader.GetInt32(1),
+                                        time_msg = reader.GetDateTime(2),
+                                        msg = reader.GetFieldValue<byte[]>(3),
+                                    };
+
+                                    //Console.WriteLine(message.ToString());
+                                    messages.Add(message);
+                                }
+                            }
+                        }
+
+                        // Возврат всех пользователей, которые не передали в виде параметра
+                        for (int i = 0; i < allUsersInChat.Count; i++)
+                        {
+                            int userId = allUsersInChat[i];
+
+                            cursor.CommandText = $"SELECT * FROM messages WHERE id_sender = {userId};";
 
                             using (NpgsqlDataReader reader = await cursor.ExecuteReaderAsync())
                             {
