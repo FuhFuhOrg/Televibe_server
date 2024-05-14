@@ -637,175 +637,112 @@ namespace shooter_server
         {
             try
             {
-                var credentials = sqlCommand.Split(' ').Skip(1).ToList();
+                List<string> credentials = new List<string>(sqlCommand.Split(' '));
+                credentials.RemoveAt(0);
                 int requestId = int.Parse(credentials[0]);
-                long chatCount = long.Parse(credentials[1]);
-                int index = 2;
 
-                List<Message> messages = new List<Message>();
-
-                for (int chatIndex = 0; chatIndex < chatCount; chatIndex++)
+                string messageString = await CreateGetMessagesStrAsync(dbConnection);
+                if (!string.IsNullOrEmpty(messageString))
                 {
-                    string chatId = credentials[index++];
-                    long senderCount = long.Parse(credentials[index++]);
-                    List<int> allUsersInChat = await GetAllUsersInChatAsync(dbConnection, chatId);
-
-                    for (int senderIndex = 0; senderIndex < senderCount; senderIndex++)
-                    {
-                        int userId = int.Parse(credentials[index++]);
-                        int messageCount = int.Parse(credentials[index++]);
-
-                        byte[] publicKey = await GetPublicKeyAsync(dbConnection, userId, chatId);
-                        allUsersInChat.Remove(userId);
-
-                        var userMessages = await GetMessagesForUserAsync(dbConnection, userId, messageCount, credentials, chatId, publicKey, index);
-                        messages.AddRange(userMessages);
-
-                        index += messageCount; // Перемещаем индекс после обработки сообщений
-                    }
-
-                    var remainingMessages = await GetRemainingUserMessagesAsync(dbConnection, allUsersInChat, chatId);
-                    messages.AddRange(remainingMessages);
+                    // Обработка полученного messageString, например, отправка его через WebSocket
+                    lobby.SendMessagePlayer(messageString, ws, requestId);
                 }
-
-                string result = string.Join("", messages.Select(m => m.GetString()));
-                Console.WriteLine(result);
-                lobby.SendMessagePlayer(result, ws, requestId);
+                else
+                {
+                    Console.WriteLine("No messages to send.");
+                }
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Error GetMessages command: {e}");
+                Console.WriteLine($"Error in GetMessages: {e}");
             }
         }
 
-        private async Task<byte[]> GetPublicKeyAsync(NpgsqlConnection dbConnection, int userId, string chatId)
+        private async Task<string> CreateGetMessagesStrAsync(NpgsqlConnection dbConnection)
         {
-            using (var command = dbConnection.CreateCommand())
-            {
-                command.CommandText = "SELECT public_key FROM users WHERE id_user = @userId AND id_chat = @chatId";
-                command.Parameters.AddWithValue("@userId", userId);
-                command.Parameters.AddWithValue("@chatId", chatId);
+            StringBuilder str = new StringBuilder();
 
-                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+            List<string> chatList = await GetChatListAsync(dbConnection); // Получаем список чатов
+            str.Append(chatList.Count);
+
+            foreach (var chatId in chatList)
+            {
+                var missMsg = await GetMissingIdsForAllAuthorsAsync(dbConnection, chatId);
+                if (missMsg == null || missMsg.Count == 0)
                 {
-                    if (await reader.ReadAsync())
-                    {
-                        return reader.GetFieldValue<byte[]>(0);
-                    }
-                    else
-                    {
-                        Console.WriteLine($"Public key не найден для пользователя {userId} в чате {chatId}");
-                        return Array.Empty<byte>();
-                    }
+                    continue;
                 }
-            }
-        }
 
-        private async Task<List<Message>> GetMessagesForUserAsync(NpgsqlConnection dbConnection, int userId, int messageCount, List<string> credentials, string chatId, byte[] publicKey, int startIndex)
-        {
-            List<Message> messages = new List<Message>();
+                str.Append($" {chatId} {missMsg.Count}");
 
-            using (var command = dbConnection.CreateCommand())
-            {
-                for (int messageIndex = 0; messageIndex < messageCount; messageIndex++)
+                foreach (var entry in missMsg)
                 {
-                    int msgId = int.Parse(credentials[startIndex + messageIndex]);
-                    command.CommandText = "SELECT id_msg, id_sender, time_msg, msg FROM messages WHERE id_sender = @userId AND id_msg = @msgId ORDER BY id_msg ASC";
-                    command.Parameters.Clear();
-                    command.Parameters.AddWithValue("@userId", userId);
-                    command.Parameters.AddWithValue("@msgId", msgId);
+                    int authorId = entry.Key;
+                    var messages = entry.Value;
+                    int messageCount = messages.Count;
 
-                    using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                    str.Append($" {authorId} {messageCount}");
+
+                    foreach (var msg in messages)
                     {
-                        while (await reader.ReadAsync())
-                        {
-                            messages.Add(new Message
-                            {
-                                id_chat = chatId,
-                                id_msg = reader.GetInt32(0),
-                                id_sender = reader.GetInt32(1),
-                                time_msg = reader.GetDateTime(2),
-                                msg = reader.GetFieldValue<byte[]>(3),
-                                public_key = publicKey
-                            });
-                        }
+                        str.Append($" {msg}");
                     }
                 }
             }
 
-            return messages;
+            return str.ToString();
         }
 
-        private async Task<List<Message>> GetRemainingUserMessagesAsync(NpgsqlConnection dbConnection, List<int> allUsersInChat, string chatId)
+        private async Task<List<string>> GetChatListAsync(NpgsqlConnection dbConnection)
         {
-            List<Message> messages = new List<Message>();
-
-            foreach (int userId in allUsersInChat)
-            {
-                byte[] publicKey = await GetPublicKeyAsync(dbConnection, userId, chatId);
-
-                using (var command = dbConnection.CreateCommand())
-                {
-                    command.CommandText = "SELECT id_msg, id_sender, time_msg, msg FROM messages WHERE id_sender = @userId";
-                    command.Parameters.Clear();
-                    command.Parameters.AddWithValue("@userId", userId);
-
-                    using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
-                    {
-                        if (reader.HasRows)
-                        {
-                            while (await reader.ReadAsync())
-                            {
-                                messages.Add(new Message
-                                {
-                                    id_chat = chatId,
-                                    id_msg = reader.GetInt32(0),
-                                    id_sender = reader.GetInt32(1),
-                                    time_msg = reader.GetDateTime(2),
-                                    msg = reader.GetFieldValue<byte[]>(3),
-                                    public_key = publicKey
-                                });
-                            }
-                        }
-                        else
-                        {
-                            messages.Add(new Message
-                            {
-                                id_chat = chatId,
-                                id_msg = 0,
-                                id_sender = userId,
-                                time_msg = DateTime.MinValue,
-                                msg = Array.Empty<byte>(),
-                                public_key = Array.Empty<byte>()
-                            });
-                        }
-                    }
-                }
-            }
-
-            return messages;
-        }
-
-        private async Task<List<int>> GetAllUsersInChatAsync(NpgsqlConnection dbConnection, string chatId)
-        {
-            List<int> userIds = new List<int>();
-
+            List<string> chatList = new List<string>();
             using (var command = dbConnection.CreateCommand())
             {
-                command.CommandText = "SELECT id_user FROM chat_users WHERE id_chat = @chatId";
-                command.Parameters.AddWithValue("@chatId", chatId);
-
-                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                command.CommandText = "SELECT DISTINCT id_chat FROM users";
+                using (var reader = await command.ExecuteReaderAsync())
                 {
                     while (await reader.ReadAsync())
                     {
-                        userIds.Add(reader.GetInt32(0));
+                        chatList.Add(reader.GetString(0));
                     }
                 }
             }
-
-            return userIds;
+            return chatList;
         }
+
+        private async Task<Dictionary<int, List<int>>> GetMissingIdsForAllAuthorsAsync(NpgsqlConnection dbConnection, string chatId)
+        {
+            Dictionary<int, List<int>> missingMessages = new Dictionary<int, List<int>>();
+            using (var command = dbConnection.CreateCommand())
+            {
+                command.CommandText = @"
+            SELECT m.id_sender, m.id_msg 
+            FROM messages m
+            JOIN users u ON m.id_sender = u.id_user
+            WHERE u.id_chat = @chatId 
+            AND m.is_missing = true
+            ORDER BY m.id_sender, m.id_msg";
+                command.Parameters.AddWithValue("@chatId", chatId);
+
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        int authorId = reader.GetInt32(0);
+                        int messageId = reader.GetInt32(1);
+
+                        if (!missingMessages.ContainsKey(authorId))
+                        {
+                            missingMessages[authorId] = new List<int>();
+                        }
+
+                        missingMessages[authorId].Add(messageId);
+                    }
+                }
+            }
+            return missingMessages;
+        }
+
 
 
 
