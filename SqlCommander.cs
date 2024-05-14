@@ -663,9 +663,9 @@ namespace shooter_server
         private async Task<(int, string)> CreateGetMessagesStrAsync(NpgsqlConnection dbConnection, List<string> credentials, long kChats, int startIndex)
         {
             StringBuilder str = new StringBuilder();
-            str.Append(kChats);
-
             int index = startIndex;
+            int returnChatsCount = 0;
+
             for (int k = 0; k < kChats; k++)
             {
                 string chatId = credentials[index++];
@@ -678,6 +678,7 @@ namespace shooter_server
                     continue;
                 }
 
+                returnChatsCount++;
                 str.Append($" {chatId} {missMsg.Count}");
 
                 foreach (var entry in missMsg)
@@ -693,11 +694,9 @@ namespace shooter_server
                         str.Append($" {msg}");
                     }
                 }
-
-                index += (int)(kSender * 2 + missMsg.Values.Sum(list => list.Count));
             }
 
-            return (index, str.ToString());
+            return (index, returnChatsCount > 0 ? $"{returnChatsCount}{str}" : "");
         }
 
         private async Task<(int, Dictionary<int, List<int>>)> GetMessagesForAuthorsAsync(NpgsqlConnection dbConnection, string chatId, List<string> credentials, long kSender, int startIndex)
@@ -707,15 +706,13 @@ namespace shooter_server
 
             for (int i = 0; i < kSender; i++)
             {
-                int authorId;
-                if (!int.TryParse(credentials[index++], out authorId))
+                if (!int.TryParse(credentials[index++], out int authorId))
                 {
                     Console.WriteLine($"Invalid authorId at index {index - 1}");
                     continue;
                 }
 
-                int kMsg;
-                if (!int.TryParse(credentials[index++], out kMsg))
+                if (!int.TryParse(credentials[index++], out int kMsg))
                 {
                     Console.WriteLine($"Invalid kMsg at index {index - 1}");
                     continue;
@@ -724,8 +721,7 @@ namespace shooter_server
                 List<int> messageIds = new List<int>();
                 for (int j = 0; j < kMsg; j++)
                 {
-                    int messageId;
-                    if (!int.TryParse(credentials[index++], out messageId))
+                    if (!int.TryParse(credentials[index++], out int messageId))
                     {
                         Console.WriteLine($"Invalid messageId at index {index - 1}");
                         continue;
@@ -766,6 +762,7 @@ namespace shooter_server
             }
             return (index, messagesByAuthors);
         }
+
 
 
 
