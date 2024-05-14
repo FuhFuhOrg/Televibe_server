@@ -706,26 +706,14 @@ namespace shooter_server
 
             for (int i = 0; i < kSender; i++)
             {
-                if (!int.TryParse(credentials[index++], out int authorId))
-                {
-                    Console.WriteLine($"Invalid authorId at index {index - 1}");
-                    continue;
-                }
+                int.TryParse(credentials[index++], out int authorId);
 
-                if (!int.TryParse(credentials[index++], out int kMsg))
-                {
-                    Console.WriteLine($"Invalid kMsg at index {index - 1}");
-                    continue;
-                }
+                int.TryParse(credentials[index++], out int kMsg);
 
                 List<int> messageIds = new List<int>();
                 for (int j = 0; j < kMsg; j++)
                 {
-                    if (!int.TryParse(credentials[index++], out int messageId))
-                    {
-                        Console.WriteLine($"Invalid messageId at index {index - 1}");
-                        continue;
-                    }
+                    int.TryParse(credentials[index++], out int messageId);
                     messageIds.Add(messageId);
                 }
 
