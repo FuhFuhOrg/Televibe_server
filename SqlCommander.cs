@@ -643,7 +643,8 @@ namespace shooter_server
 
             try
             {
-                string messageString = await CreateGetMessagesStrAsync(dbConnection, credentials, kChats, index);
+                var (adI, messageString) = await CreateGetMessagesStrAsync(dbConnection, credentials, kChats, index);
+                index = adI;
                 if (!string.IsNullOrEmpty(messageString))
                 {
                     lobby.SendMessagePlayer(messageString, ws, requestId);
@@ -659,7 +660,7 @@ namespace shooter_server
             }
         }
 
-        private async Task<string> CreateGetMessagesStrAsync(NpgsqlConnection dbConnection, List<string> credentials, long kChats, int startIndex)
+        private async Task<(int, string)> CreateGetMessagesStrAsync(NpgsqlConnection dbConnection, List<string> credentials, long kChats, int startIndex)
         {
             StringBuilder str = new StringBuilder();
             str.Append(kChats);
@@ -670,7 +671,8 @@ namespace shooter_server
                 string chatId = credentials[index++];
                 long kSender = long.Parse(credentials[index++]);
 
-                var missMsg = await GetMessagesForAuthorsAsync(dbConnection, chatId, credentials, kSender, index);
+                var (adI, missMsg) = await GetMessagesForAuthorsAsync(dbConnection, chatId, credentials, kSender, index);
+                index = adI;
                 if (missMsg == null || missMsg.Count == 0)
                 {
                     continue;
@@ -695,10 +697,10 @@ namespace shooter_server
                 index += (int)(kSender * 2 + missMsg.Values.Sum(list => list.Count));
             }
 
-            return str.ToString();
+            return (index, str.ToString());
         }
 
-        private async Task<Dictionary<int, List<int>>> GetMessagesForAuthorsAsync(NpgsqlConnection dbConnection, string chatId, List<string> credentials, long kSender, int startIndex)
+        private async Task<(int, Dictionary<int, List<int>>)> GetMessagesForAuthorsAsync(NpgsqlConnection dbConnection, string chatId, List<string> credentials, long kSender, int startIndex)
         {
             Dictionary<int, List<int>> messagesByAuthors = new Dictionary<int, List<int>>();
             int index = startIndex;
@@ -762,7 +764,7 @@ namespace shooter_server
                     }
                 }
             }
-            return messagesByAuthors;
+            return (index, messagesByAuthors);
         }
 
 
