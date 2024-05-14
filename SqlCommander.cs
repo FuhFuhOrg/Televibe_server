@@ -651,7 +651,7 @@ namespace shooter_server
                 }
                 else
                 {
-                    Console.WriteLine("No messages to send.");
+                    lobby.SendMessagePlayer("0", ws, requestId);
                 }
             }
             catch (Exception e)
@@ -706,14 +706,26 @@ namespace shooter_server
 
             for (int i = 0; i < kSender; i++)
             {
-                int.TryParse(credentials[index++], out int authorId);
+                if (!int.TryParse(credentials[index++], out int authorId))
+                {
+                    Console.WriteLine($"Invalid authorId at index {index - 1}");
+                    continue;
+                }
 
-                int.TryParse(credentials[index++], out int kMsg);
+                if (!int.TryParse(credentials[index++], out int kMsg))
+                {
+                    Console.WriteLine($"Invalid kMsg at index {index - 1}");
+                    continue;
+                }
 
                 List<int> messageIds = new List<int>();
                 for (int j = 0; j < kMsg; j++)
                 {
-                    int.TryParse(credentials[index++], out int messageId);
+                    if (!int.TryParse(credentials[index++], out int messageId))
+                    {
+                        Console.WriteLine($"Invalid messageId at index {index - 1}");
+                        continue;
+                    }
                     messageIds.Add(messageId);
                 }
 
