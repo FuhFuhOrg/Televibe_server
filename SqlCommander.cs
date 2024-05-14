@@ -339,10 +339,10 @@ namespace shooter_server
 
                     credentials.RemoveAt(0);
 
-                    int requestId = int.Parse(credentials[0]);
-                    bool isPrivacy = bool.Parse(credentials[1]);
-                    byte[] publicKey = Convert.FromBase64String(credentials[2]);
-                    String chatPassword = credentials.Count == 4 ? credentials[3] : "";
+                    int index = 0;
+                    int requestId = int.Parse(credentials[index++]);
+                    bool isPrivacy = bool.Parse(credentials[index++]);
+                    String chatPassword = credentials.Count == 4 ? credentials[index++] : "";
 
                     string idChat = GenerateUniqueChatId(dbConnection);
 
@@ -355,7 +355,7 @@ namespace shooter_server
 
                     Console.WriteLine("Chat Created");
 
-                    await UserCreate(sqlCommand, senderId, dbConnection, lobby, ws, requestId, idChat, publicKey);
+                    await UserCreate(sqlCommand, senderId, dbConnection, lobby, ws, requestId, idChat);
                 }
             }
             catch (Exception e)
@@ -366,7 +366,7 @@ namespace shooter_server
 
 
         // Создание нового юзера
-        private async Task UserCreate(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws, int requestId, string idChat, byte[] publicKey)
+        private async Task UserCreate(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws, int requestId, string idChat)
         {
             try
             {
@@ -376,7 +376,7 @@ namespace shooter_server
 
                     cursor.Parameters.AddWithValue("idUser", idUser);
                     cursor.Parameters.AddWithValue("idChat", idChat);
-                    cursor.Parameters.AddWithValue("publicKey", publicKey);
+                    cursor.Parameters.AddWithValue("publicKey", "--");
 
                     cursor.CommandText = @"INSERT INTO users (id_user, id_chat, public_key) VALUES (@idUser, @idChat, @publicKey);";
                     await cursor.ExecuteNonQueryAsync();
