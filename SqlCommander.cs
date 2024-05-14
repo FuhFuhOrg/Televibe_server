@@ -692,8 +692,7 @@ namespace shooter_server
                     }
                 }
 
-                // Обновляем индекс после обработки всех авторов в текущем чате
-                index = missMsg.Values.Sum(list => list.Count) * 2 + missMsg.Count * 2 + index - missMsg.Values.Sum(list => list.Count);
+                index += (int)(kSender * 2 + missMsg.Values.Sum(list => list.Count));
             }
 
             return str.ToString();
@@ -706,25 +705,42 @@ namespace shooter_server
 
             for (int i = 0; i < kSender; i++)
             {
-                int authorId = int.Parse(credentials[index++]);
-                int kMsg = int.Parse(credentials[index++]);
+                int authorId;
+                if (!int.TryParse(credentials[index++], out authorId))
+                {
+                    Console.WriteLine($"Invalid authorId at index {index - 1}");
+                    continue;
+                }
+
+                int kMsg;
+                if (!int.TryParse(credentials[index++], out kMsg))
+                {
+                    Console.WriteLine($"Invalid kMsg at index {index - 1}");
+                    continue;
+                }
 
                 List<int> messageIds = new List<int>();
                 for (int j = 0; j < kMsg; j++)
                 {
-                    messageIds.Add(int.Parse(credentials[index++]));
+                    int messageId;
+                    if (!int.TryParse(credentials[index++], out messageId))
+                    {
+                        Console.WriteLine($"Invalid messageId at index {index - 1}");
+                        continue;
+                    }
+                    messageIds.Add(messageId);
                 }
 
                 using (var command = dbConnection.CreateCommand())
                 {
                     command.CommandText = @"
-            SELECT m.id_msg
-            FROM messages m
-            JOIN users u ON m.id_sender = u.id_user
-            WHERE u.id_chat = @chatId 
-              AND m.id_sender = @authorId
-              AND (m.id_msg = ANY(@messageIds) OR m.id_msg > @lastMsgId)
-            ORDER BY m.id_msg";
+                SELECT m.id_msg
+                FROM messages m
+                JOIN users u ON m.id_sender = u.id_user
+                WHERE u.id_chat = @chatId 
+                  AND m.id_sender = @authorId
+                  AND (m.id_msg = ANY(@messageIds) OR m.id_msg > @lastMsgId)
+                ORDER BY m.id_msg";
                     command.Parameters.AddWithValue("@chatId", chatId);
                     command.Parameters.AddWithValue("@authorId", authorId);
                     command.Parameters.AddWithValue("@messageIds", messageIds.ToArray());
@@ -748,6 +764,8 @@ namespace shooter_server
             }
             return messagesByAuthors;
         }
+
+
 
 
 
