@@ -691,7 +691,7 @@ namespace shooter_server
 
                     foreach (var msg in messages)
                     {
-                        str.Append($" {msg.id_msg} {msg.time_msg:yyyy-MM-ddTHH:mm:ss.fffffff} {Convert.ToBase64String(msg.msg)}");
+                        str.Append($" {msg.id_msg} {msg.time_msg.ToString("dd.MM.yyyy HH:mm:ss")} {Convert.ToBase64String(msg.msg)}");
                     }
                 }
             }
