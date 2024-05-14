@@ -10,6 +10,7 @@ using System.Numerics;
 using System.Diagnostics;
 using System.Net;
 using System.ComponentModel;
+using System;
 
 
 namespace shooter_server
@@ -88,6 +89,9 @@ namespace shooter_server
                             break;
                         case string s when s.StartsWith("ReturnMessageByIdMsg"):
                             await Task.Run(() => ReturnMessageByIdMsg(sqlCommand, senderId, dbConnection, lobby, webSocket));
+                            break;
+                        case string s when s.StartsWith("UserCreate"):
+                            await Task.Run(() => UserCreate(sqlCommand, senderId, dbConnection, lobby, webSocket));
                             break;
                         default:
                             Console.WriteLine("Command not found");
@@ -339,23 +343,23 @@ namespace shooter_server
 
                     credentials.RemoveAt(0);
 
-                    int index = 0;
-                    int requestId = int.Parse(credentials[index++]);
-                    bool isPrivacy = bool.Parse(credentials[index++]);
-                    String chatPassword = credentials.Count == 4 ? credentials[index++] : "";
+                    int requestId = int.Parse(credentials[0]);
+                    bool isPrivacy = bool.Parse(credentials[1]);
+                    String chatPassword = credentials.Count == 4 ? credentials[2] : "";
 
                     string idChat = GenerateUniqueChatId(dbConnection);
+                    int idUser = GenerateUniqueUserId(dbConnection);
 
+                    cursor.CommandText = @"INSERT INTO chat (id_chat, chat_password, is_privacy) VALUES (@idChat, @chatPassword, @isPrivacy);";
                     cursor.Parameters.AddWithValue("idChat", idChat);
                     cursor.Parameters.AddWithValue("chatPassword", chatPassword);
                     cursor.Parameters.AddWithValue("isPrivacy", isPrivacy);
 
-                    cursor.CommandText = @"INSERT INTO chat (id_chat, chat_password, is_privacy) VALUES (@idChat, @chatPassword, @isPrivacy);";
                     await cursor.ExecuteNonQueryAsync();
 
                     Console.WriteLine("Chat Created");
 
-                    await UserCreate(sqlCommand, senderId, dbConnection, lobby, ws, requestId, idChat);
+                    lobby.SendMessagePlayer(idChat + " " + idUser, ws, requestId);
                 }
             }
             catch (Exception e)
@@ -365,25 +369,33 @@ namespace shooter_server
         }
 
 
-        // Создание нового юзера
-        private async Task UserCreate(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws, int requestId, string idChat)
+        // Генерация пользователя
+        private async Task UserCreate(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
             try
             {
                 using (var cursor = dbConnection.CreateCommand())
                 {
-                    int idUser = GenerateUniqueUserId(dbConnection);
+                    // AddPublicKeyToDB requestId idUser idChat publicKey
+                    List<string> credentials = new List<string>(sqlCommand.Split(' '));
+                    credentials.RemoveAt(0);
 
+                    int requestId = int.Parse(credentials[0]);
+                    int idUser = int.Parse(credentials[1]);
+                    string idChat = credentials[2];
+                    byte[] publicKey = Convert.FromBase64String(credentials[3]);
+
+                    cursor.CommandText = @"INSERT INTO users (id_user, id_chat, public_key) VALUES (@idUser, @idChat, @publicKey);";
                     cursor.Parameters.AddWithValue("idUser", idUser);
                     cursor.Parameters.AddWithValue("idChat", idChat);
+                    cursor.Parameters.AddWithValue("publicKey", publicKey);
 
-                    cursor.CommandText = @"INSERT INTO users (id_user, id_chat) VALUES (@idUser, @idChat);";
                     await cursor.ExecuteNonQueryAsync();
-                    
+
                     Console.WriteLine("User Added");
                     Console.WriteLine(requestId);
 
-                    lobby.SendMessagePlayer(idChat + " " + idUser, ws, requestId);
+                    lobby.SendMessagePlayer("success", ws, requestId);
                 }
             }
             catch (Exception e)

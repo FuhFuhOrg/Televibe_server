@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("shooter_server")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9bc7f022efb4368a75295643fd470a17e72b58a1")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+87a2aad09efc67ef5ad9143036d3b7404c1a1f0a")]
 [assembly: System.Reflection.AssemblyProductAttribute("shooter_server")]
 [assembly: System.Reflection.AssemblyTitleAttribute("shooter_server")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
