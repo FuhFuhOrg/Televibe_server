@@ -635,16 +635,17 @@ namespace shooter_server
         // Вернуть сообщения
         private async Task GetMessages(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
+            List<string> credentials = new List<string>(sqlCommand.Split(' '));
+            credentials.RemoveAt(0);
+            int requestId = int.Parse(credentials[0]);
+            long kChats = long.Parse(credentials[1]);
+            int index = 2;
+
             try
             {
-                List<string> credentials = new List<string>(sqlCommand.Split(' '));
-                credentials.RemoveAt(0);
-                int requestId = int.Parse(credentials[0]);
-
-                string messageString = await CreateGetMessagesStrAsync(dbConnection);
+                string messageString = await CreateGetMessagesStrAsync(dbConnection, credentials, kChats, index);
                 if (!string.IsNullOrEmpty(messageString))
                 {
-                    // Обработка полученного messageString, например, отправка его через WebSocket
                     lobby.SendMessagePlayer(messageString, ws, requestId);
                 }
                 else
@@ -658,16 +659,18 @@ namespace shooter_server
             }
         }
 
-        private async Task<string> CreateGetMessagesStrAsync(NpgsqlConnection dbConnection)
+        private async Task<string> CreateGetMessagesStrAsync(NpgsqlConnection dbConnection, List<string> credentials, long kChats, int startIndex)
         {
             StringBuilder str = new StringBuilder();
+            str.Append(kChats);
 
-            List<string> chatList = await GetChatListAsync(dbConnection); // Получаем список чатов
-            str.Append(chatList.Count);
-
-            foreach (var chatId in chatList)
+            int index = startIndex;
+            for (int k = 0; k < kChats; k++)
             {
-                var missMsg = await GetMissingIdsForAllAuthorsAsync(dbConnection, chatId);
+                string chatId = credentials[index++];
+                long kSender = long.Parse(credentials[index++]);
+
+                var missMsg = await GetMessagesForAuthorsAsync(dbConnection, chatId, credentials, kSender, index);
                 if (missMsg == null || missMsg.Count == 0)
                 {
                     continue;
@@ -688,61 +691,63 @@ namespace shooter_server
                         str.Append($" {msg}");
                     }
                 }
+
+                // Обновляем индекс после обработки всех авторов в текущем чате
+                index = missMsg.Values.Sum(list => list.Count) * 2 + missMsg.Count * 2 + index - missMsg.Values.Sum(list => list.Count);
             }
 
             return str.ToString();
         }
 
-        private async Task<List<string>> GetChatListAsync(NpgsqlConnection dbConnection)
+        private async Task<Dictionary<int, List<int>>> GetMessagesForAuthorsAsync(NpgsqlConnection dbConnection, string chatId, List<string> credentials, long kSender, int startIndex)
         {
-            List<string> chatList = new List<string>();
-            using (var command = dbConnection.CreateCommand())
-            {
-                command.CommandText = "SELECT DISTINCT id_chat FROM users";
-                using (var reader = await command.ExecuteReaderAsync())
-                {
-                    while (await reader.ReadAsync())
-                    {
-                        chatList.Add(reader.GetString(0));
-                    }
-                }
-            }
-            return chatList;
-        }
+            Dictionary<int, List<int>> messagesByAuthors = new Dictionary<int, List<int>>();
+            int index = startIndex;
 
-        private async Task<Dictionary<int, List<int>>> GetMissingIdsForAllAuthorsAsync(NpgsqlConnection dbConnection, string chatId)
-        {
-            Dictionary<int, List<int>> missingMessages = new Dictionary<int, List<int>>();
-            using (var command = dbConnection.CreateCommand())
+            for (int i = 0; i < kSender; i++)
             {
-                command.CommandText = @"
-            SELECT m.id_sender, m.id_msg 
+                int authorId = int.Parse(credentials[index++]);
+                int kMsg = int.Parse(credentials[index++]);
+
+                List<int> messageIds = new List<int>();
+                for (int j = 0; j < kMsg; j++)
+                {
+                    messageIds.Add(int.Parse(credentials[index++]));
+                }
+
+                using (var command = dbConnection.CreateCommand())
+                {
+                    command.CommandText = @"
+            SELECT m.id_msg
             FROM messages m
             JOIN users u ON m.id_sender = u.id_user
             WHERE u.id_chat = @chatId 
-            AND m.is_missing = true
-            ORDER BY m.id_sender, m.id_msg";
-                command.Parameters.AddWithValue("@chatId", chatId);
+              AND m.id_sender = @authorId
+              AND (m.id_msg = ANY(@messageIds) OR m.id_msg > @lastMsgId)
+            ORDER BY m.id_msg";
+                    command.Parameters.AddWithValue("@chatId", chatId);
+                    command.Parameters.AddWithValue("@authorId", authorId);
+                    command.Parameters.AddWithValue("@messageIds", messageIds.ToArray());
+                    command.Parameters.AddWithValue("@lastMsgId", messageIds.Last());
 
-                using (var reader = await command.ExecuteReaderAsync())
-                {
-                    while (await reader.ReadAsync())
+                    using (var reader = await command.ExecuteReaderAsync())
                     {
-                        int authorId = reader.GetInt32(0);
-                        int messageId = reader.GetInt32(1);
-
-                        if (!missingMessages.ContainsKey(authorId))
+                        while (await reader.ReadAsync())
                         {
-                            missingMessages[authorId] = new List<int>();
-                        }
+                            int messageId = reader.GetInt32(0);
 
-                        missingMessages[authorId].Add(messageId);
+                            if (!messagesByAuthors.ContainsKey(authorId))
+                            {
+                                messagesByAuthors[authorId] = new List<int>();
+                            }
+
+                            messagesByAuthors[authorId].Add(messageId);
+                        }
                     }
                 }
             }
-            return missingMessages;
+            return messagesByAuthors;
         }
-
 
 
 
