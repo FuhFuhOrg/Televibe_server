@@ -691,7 +691,7 @@ namespace shooter_server
 
                     foreach (var msg in messages)
                     {
-                        str.Append($" {msg}");
+                        str.Append($" {msg.id_msg} {msg.time_msg:yyyy-MM-ddTHH:mm:ss.fffffff} {Convert.ToBase64String(msg.msg)}");
                     }
                 }
             }
@@ -699,9 +699,9 @@ namespace shooter_server
             return (index, returnChatsCount > 0 ? $"{returnChatsCount}{str}" : "");
         }
 
-        private async Task<(int, Dictionary<int, List<int>>)> GetMessagesForAuthorsAsync(NpgsqlConnection dbConnection, string chatId, List<string> credentials, long kSender, int startIndex)
+        private async Task<(int, Dictionary<int, List<Message>>)> GetMessagesForAuthorsAsync(NpgsqlConnection dbConnection, string chatId, List<string> credentials, long kSender, int startIndex)
         {
-            Dictionary<int, List<int>> messagesByAuthors = new Dictionary<int, List<int>>();
+            Dictionary<int, List<Message>> messagesByAuthors = new Dictionary<int, List<Message>>();
             int index = startIndex;
 
             for (int i = 0; i < kSender; i++)
@@ -732,7 +732,7 @@ namespace shooter_server
                 using (var command = dbConnection.CreateCommand())
                 {
                     command.CommandText = @"
-                SELECT m.id_msg
+                SELECT m.id_msg, m.time_msg, m.msg
                 FROM messages m
                 JOIN users u ON m.id_sender = u.id_user
                 WHERE u.id_chat = @chatId 
@@ -749,19 +749,27 @@ namespace shooter_server
                         while (await reader.ReadAsync())
                         {
                             int messageId = reader.GetInt32(0);
+                            DateTime timeMsg = reader.GetDateTime(1);
+                            byte[] msg = reader.GetFieldValue<byte[]>(2);
 
                             if (!messagesByAuthors.ContainsKey(authorId))
                             {
-                                messagesByAuthors[authorId] = new List<int>();
+                                messagesByAuthors[authorId] = new List<Message>();
                             }
 
-                            messagesByAuthors[authorId].Add(messageId);
+                            messagesByAuthors[authorId].Add(new Message
+                            {
+                                id_msg = messageId,
+                                time_msg = timeMsg,
+                                msg = msg
+                            });
                         }
                     }
                 }
             }
             return (index, messagesByAuthors);
         }
+
 
 
 
