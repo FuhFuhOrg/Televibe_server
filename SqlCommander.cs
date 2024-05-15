@@ -407,6 +407,7 @@ namespace shooter_server
         }
 
 
+        // Существует ли такой чат
         private async Task ExistChat(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
             try
@@ -470,7 +471,7 @@ namespace shooter_server
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Error addUserToChat command: {e}");
+                Console.WriteLine($"Error ExistChat command: {e}");
             }
         }
 
@@ -696,7 +697,6 @@ namespace shooter_server
         }
 
 
-
         // Вернуть сообщения
         private async Task GetMessages(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
@@ -724,6 +724,7 @@ namespace shooter_server
                 Console.WriteLine($"Error in GetMessages: {e}");
             }
         }
+
 
         private async Task<(int, string)> CreateGetMessagesStrAsync(NpgsqlConnection dbConnection, List<string> credentials, long kChats, int startIndex)
         {
@@ -763,6 +764,7 @@ namespace shooter_server
 
             return (index, returnChatsCount > 0 ? $"{returnChatsCount}{str}" : "");
         }
+
 
         private async Task<(int, Dictionary<int, List<Message>>)> GetMessagesForAuthorsAsync(NpgsqlConnection dbConnection, string chatId, List<string> credentials, long kSender, int startIndex)
         {
