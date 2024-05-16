@@ -862,7 +862,7 @@ namespace shooter_server
 
                 using (var cursor = dbConnection.CreateCommand())
                 {
-                    cursor.Parameters.AddWithValue("id_sender", idSender);
+                    cursor.Parameters.AddWithValue("idSender", idSender);
                     cursor.CommandText = "SELECT id_msg FROM messages WHERE msg = '' AND id_sender = @idSender";
 
                     object result = await cursor.ExecuteScalarAsync();
