@@ -535,7 +535,7 @@ namespace shooter_server
                         }
                     }
 
-                    //lobby.SendMessagePlayer(fullIdChat + " " + idUser.ToString(), ws, requestId);
+                    lobby.SendMessagePlayer(idUser.ToString(), ws, requestId);
                 }
             }
             catch (Exception e)
@@ -841,13 +841,6 @@ namespace shooter_server
         }
 
 
-
-
-
-
-
-
-
         // Отправить сообщение
         private async Task SendMessage(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
@@ -878,6 +871,7 @@ namespace shooter_server
                     cursor.Parameters.AddWithValue("id_sender", idSender);
 
                     object result = await cursor.ExecuteScalarAsync();
+
                     if (result != null)
                     {
                         idMsg = (long)result;
