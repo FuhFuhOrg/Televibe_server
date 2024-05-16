@@ -11,6 +11,7 @@ using System.Diagnostics;
 using System.Net;
 using System.ComponentModel;
 using System;
+using System.Collections.Generic;
 
 
 namespace shooter_server
@@ -744,15 +745,22 @@ namespace shooter_server
 
                 foreach (var entry in missMsg)
                 {
-                    int authorId = entry.Key;
+                    var (authorId, publicKey) = entry.Key;
                     var messages = entry.Value;
                     int messageCount = messages.Count;
 
-                    str.Append($" {authorId} {messageCount}");
+                    if (publicKey == Array.Empty<byte>())
+                    {
+                        str.Append($" {authorId} false {messageCount}");
+                    }
+                    else
+                    {
+                        str.Append($" {authorId} true {publicKey} {messageCount}");
+                    }
 
                     foreach (var msg in messages)
                     {
-                        str.Append($" {msg.id_msg} {msg.time_msg.ToString("dd.MM.yyyy HH:mm:ss")} {Convert.ToBase64String(msg.msg)}");
+                        str.Append($" {msg.id_msg} {msg.is_erase} {msg.time_msg.ToString("dd.MM.yyyy HH:mm:ss")} {Convert.ToBase64String(msg.msg)}");
                     }
                 }
             }
@@ -761,9 +769,9 @@ namespace shooter_server
         }
 
 
-        private async Task<(int, Dictionary<int, List<Message>>)> GetMessagesForAuthorsAsync(NpgsqlConnection dbConnection, string chatId, List<string> credentials, long kSender, int startIndex)
+        private async Task<(int, Dictionary<(int, byte[]), List<Message>>)> GetMessagesForAuthorsAsync(NpgsqlConnection dbConnection, string chatId, List<string> credentials, long kSender, int startIndex)
         {
-            Dictionary<int, List<Message>> messagesByAuthors = new Dictionary<int, List<Message>>();
+            Dictionary<(int, byte[]), List<Message>> messagesByAuthors = new Dictionary<(int, byte[]), List<Message>>();
             int index = startIndex;
 
             for (int i = 0; i < kSender; i++)
@@ -774,10 +782,36 @@ namespace shooter_server
                     continue;
                 }
 
+                if (!bool.TryParse(credentials[index++], out bool authorKey))
+                {
+                    Console.WriteLine($"Invalid authorId at index {index - 1}");
+                    continue;
+                }
+
                 if (!int.TryParse(credentials[index++], out int kMsg))
                 {
                     Console.WriteLine($"Invalid kMsg at index {index - 1}");
                     continue;
+                }
+
+                byte[] publicKey = Array.Empty<byte>();
+
+                if (!authorKey)
+                {
+                    using (var cursor = dbConnection.CreateCommand())
+                    {
+                        cursor.Parameters.AddWithValue("authorId", authorId);
+
+                        cursor.CommandText = @"SELECT public_key FROM users WHERE id_user = @authorId";
+
+                        using (var reader = await cursor.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                publicKey = reader.GetFieldValue<byte[]>(0);
+                            }
+                        }
+                    }
                 }
 
                 List<int> messageIds = new List<int>();
@@ -815,12 +849,12 @@ namespace shooter_server
                             byte[] msg = reader.GetFieldValue<byte[]>(2);
                             bool is_erase = reader.GetBoolean(3);
 
-                            if (!messagesByAuthors.ContainsKey(authorId))
+                            if (!messagesByAuthors.ContainsKey((authorId, publicKey)))
                             {
-                                messagesByAuthors[authorId] = new List<Message>();
+                                messagesByAuthors[(authorId, publicKey)] = new List<Message>();
                             }
 
-                            messagesByAuthors[authorId].Add(new Message
+                            messagesByAuthors[(authorId, publicKey)].Add(new Message
                             {
                                 id_msg = messageId,
                                 time_msg = timeMsg,
