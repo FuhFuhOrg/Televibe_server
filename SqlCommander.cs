@@ -342,16 +342,14 @@ namespace shooter_server
             {
                 using (var cursor = dbConnection.CreateCommand())
                 {
-                    // ChatCreate requestId chatPassword isPrivacy
+                    // ChatCreate requestId isPrivacy chatPassword
                     List<string> credentials = new List<string>(sqlCommand.Split(' '));
-
-                    Console.WriteLine(sqlCommand);
 
                     credentials.RemoveAt(0);
 
                     int requestId = int.Parse(credentials[0]);
                     bool isPrivacy = bool.Parse(credentials[1]);
-                    string chatPassword = credentials.Count == 4 ? credentials[2] : "";
+                    string chatPassword = credentials.Count == 3 ? credentials[2] : "";
 
                     string idChat = GenerateUniqueChatId(dbConnection);
 
