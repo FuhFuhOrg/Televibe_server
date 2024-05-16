@@ -830,7 +830,7 @@ namespace shooter_server
                                 id_msg = messageId,
                                 time_msg = timeMsg,
                                 msg = msg,
-                                is_erase = is_erase
+                                is_erase = is_erase ? "false" : ""
                             });
                         }
                     }
