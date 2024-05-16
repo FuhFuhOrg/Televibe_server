@@ -754,7 +754,7 @@ namespace shooter_server
                     }
                     else
                     {
-                        str.Append($" {authorId} true {publicKey} {messageCount}");
+                        str.Append($" {authorId} true {Convert.ToBase64String(publicKey)} {messageCount}");
                     }
 
                     foreach (var msg in messages)
