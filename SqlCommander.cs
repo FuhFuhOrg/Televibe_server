@@ -349,7 +349,7 @@ namespace shooter_server
 
                     int requestId = int.Parse(credentials[0]);
                     bool isPrivacy = bool.Parse(credentials[1]);
-                    String chatPassword = credentials.Count == 4 ? credentials[2] : "";
+                    string chatPassword = credentials.Count == 4 ? credentials[2] : "";
 
                     string idChat = GenerateUniqueChatId(dbConnection);
 
