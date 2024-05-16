@@ -488,7 +488,6 @@ namespace shooter_server
                     Console.WriteLine(sqlCommand);
 
                     int idUser = GenerateUniqueUserId(dbConnection);
-                    string fullIdChat = "";
 
                     // addUserToChat requestId publicKey idChat chatPassword 
                     List<string> credentials = new List<string>(sqlCommand.Split(' '));
@@ -504,28 +503,22 @@ namespace shooter_server
                     {
                         // Если чат с паролем
                         string idChat = credentials[0];
-                        String chatPassword = credentials.Count == 2 ? credentials[1] : "";
+                        string chatPassword = credentials.Count == 2 ? credentials[1] : "";
 
                         cursor.Parameters.AddWithValue("idChat", idChat);
-                        if (chatPassword != null)
+                        if (chatPassword != "")
                         {
                             cursor.Parameters.AddWithValue("chatPassword", chatPassword);
                         }
 
-                        cursor.CommandText = @"SELECT id_chat
-                                    FROM chat
-                                    WHERE SUBSTR(id_chat, 1, 8) = @idChat" +
-                                            (chatPassword != null ? " AND chat_password = @chatPassword" : "") + ";";
-
                         using (var reader = cursor.ExecuteReader())
                         {
-                            fullIdChat = reader.GetString("id_chat");
                             reader.Close();
 
                             using (var insertCommand = dbConnection.CreateCommand())
                             {
                                 insertCommand.Parameters.AddWithValue("idUser", idUser);
-                                insertCommand.Parameters.AddWithValue("idChat", fullIdChat);
+                                insertCommand.Parameters.AddWithValue("idChat", idChat);
                                 insertCommand.Parameters.AddWithValue("publicKey", publicKey);
 
                                 insertCommand.CommandText = @"INSERT INTO users (id_user, id_chat, public_key) VALUES (@idUser, @idChat, @publicKey);";
@@ -697,6 +690,7 @@ namespace shooter_server
                 Console.WriteLine($"Error ReturnLastKMessages command: {e}");
             }
         }
+
 
         // Вернуть сообщения
         private async Task GetMessages(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
