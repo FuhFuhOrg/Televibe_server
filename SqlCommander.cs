@@ -441,10 +441,9 @@ namespace shooter_server
                             cursor.Parameters.AddWithValue("chatPassword", chatPassword);
                         }
 
-                        cursor.CommandText = @"SELECT id_chat
-                                    FROM chat
-                                    WHERE SUBSTR(id_chat, 1, 8) = @idChat" +
-                                            (chatPassword != null ? " AND chat_password = @chatPassword" : "") + ";";
+                        cursor.CommandText = @"SELECT id_chat FROM chat WHERE id_chat = @idChat" +
+                            (chatPassword != null ? " AND chat_password = @chatPassword" : "") + ";";
+
 
                         using (var reader = cursor.ExecuteReader())
                         {
@@ -452,7 +451,7 @@ namespace shooter_server
                             {
                                 fullIdChat = reader.GetString("id_chat");
 
-                                if (fullIdChat.Substring(0, 8) == idChat)
+                                if (fullIdChat == idChat)
                                 {
                                     Console.WriteLine("A user can be added");
                                     lobby.SendMessagePlayer("true", ws, requestId);
