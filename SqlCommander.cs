@@ -351,7 +351,6 @@ namespace shooter_server
                     String chatPassword = credentials.Count == 4 ? credentials[2] : "";
 
                     string idChat = GenerateUniqueChatId(dbConnection);
-                    int idUser = GenerateUniqueUserId(dbConnection);
 
                     cursor.CommandText = @"INSERT INTO chat (id_chat, chat_password, is_privacy) VALUES (@idChat, @chatPassword, @isPrivacy);";
                     cursor.Parameters.AddWithValue("idChat", idChat);
@@ -362,7 +361,7 @@ namespace shooter_server
 
                     Console.WriteLine("Chat Created");
 
-                    lobby.SendMessagePlayer(idChat + " " + idUser, ws, requestId);
+                    lobby.SendMessagePlayer(idChat, ws, requestId);
                 }
             }
             catch (Exception e)
@@ -379,14 +378,15 @@ namespace shooter_server
             {
                 using (var cursor = dbConnection.CreateCommand())
                 {
-                    // AddPublicKeyToDB requestId idUser idChat publicKey
+                    // AddPublicKeyToDB requestId idChat publicKey
                     List<string> credentials = new List<string>(sqlCommand.Split(' '));
                     credentials.RemoveAt(0);
 
                     int requestId = int.Parse(credentials[0]);
-                    int idUser = int.Parse(credentials[1]);
-                    string idChat = credentials[2];
-                    byte[] publicKey = Convert.FromBase64String(credentials[3]);
+                    string idChat = credentials[1];
+                    byte[] publicKey = Convert.FromBase64String(credentials[2]);
+
+                    int idUser = GenerateUniqueUserId(dbConnection);
 
                     cursor.CommandText = @"INSERT INTO users (id_user, id_chat, public_key) VALUES (@idUser, @idChat, @publicKey);";
                     cursor.Parameters.AddWithValue("idUser", idUser);
@@ -398,6 +398,8 @@ namespace shooter_server
                     Console.WriteLine("User Added");
                     Console.WriteLine(requestId);
                     Console.WriteLine("Success");
+
+                    lobby.SendMessagePlayer(idUser.ToString(), ws, requestId);
                 }
             }
             catch (Exception e)
