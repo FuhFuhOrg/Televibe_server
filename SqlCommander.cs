@@ -511,21 +511,26 @@ namespace shooter_server
                             cursor.Parameters.AddWithValue("chatPassword", chatPassword);
                         }
 
+                        cursor.CommandText = @"SELECT id_chat FROM chat WHERE id_chat = @idChat" +
+                            (chatPassword != "" ? " AND chat_password = @chatPassword" : "") + ";";
+
                         using (var reader = cursor.ExecuteReader())
                         {
-                            reader.Close();
-
-                            using (var insertCommand = dbConnection.CreateCommand())
+                            if (await reader.ReadAsync())
                             {
-                                insertCommand.Parameters.AddWithValue("idUser", idUser);
-                                insertCommand.Parameters.AddWithValue("idChat", idChat);
-                                insertCommand.Parameters.AddWithValue("publicKey", publicKey);
+                                cursor.Parameters.AddWithValue("idUser", idUser);
+                                cursor.Parameters.AddWithValue("idChat", idChat);
+                                cursor.Parameters.AddWithValue("publicKey", publicKey);
 
-                                insertCommand.CommandText = @"INSERT INTO users (id_user, id_chat, public_key) VALUES (@idUser, @idChat, @publicKey);";
+                                cursor.CommandText = @"INSERT INTO users (id_user, id_chat, public_key) VALUES (@idUser, @idChat, @publicKey);";
 
-                                await insertCommand.ExecuteNonQueryAsync();
+                                await cursor.ExecuteNonQueryAsync();
 
                                 Console.WriteLine($"Success");
+                            }
+                            else
+                            {
+                                Console.WriteLine("No matching records found.");
                             }
                         }
                     }
