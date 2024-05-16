@@ -780,6 +780,23 @@ namespace shooter_server
             Dictionary<(int, byte[]), List<Message>> messagesByAuthors = new Dictionary<(int, byte[]), List<Message>>();
             int index = startIndex;
 
+            List<int> idUsers = new List<int>();
+
+            using (var cursor = dbConnection.CreateCommand())
+            {
+                cursor.Parameters.AddWithValue("chatId", chatId);
+
+                cursor.CommandText = @"SELECT id_user FROM users WHERE id_chat = @chatId";
+
+                using (var reader = await cursor.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        idUsers.Add(reader.GetInt32(0));
+                    }
+                }
+            }
+
             for (int i = 0; i < kSender; i++)
             {
                 if (!int.TryParse(credentials[index++], out int authorId))
@@ -787,6 +804,8 @@ namespace shooter_server
                     Console.WriteLine($"Invalid authorId at index {index - 1}");
                     continue;
                 }
+
+                idUsers.Remove(authorId);
 
                 if (!bool.TryParse(credentials[index++], out bool authorKey))
                 {
@@ -861,6 +880,72 @@ namespace shooter_server
                             }
 
                             messagesByAuthors[(authorId, publicKey)].Add(new Message
+                            {
+                                id_msg = messageId,
+                                time_msg = timeMsg,
+                                msg = msg,
+                                is_erase = is_erase
+                            });
+                        }
+                    }
+                }
+            }
+
+            for (int i = 0; i < idUsers.Count; i++)
+            {
+                bool authorKey = false;
+
+                byte[] publicKey = Array.Empty<byte>();
+
+                if (!authorKey)
+                {
+                    using (var cursor = dbConnection.CreateCommand())
+                    {
+                        cursor.Parameters.AddWithValue("authorId", idUsers[i]);
+
+                        cursor.CommandText = @"SELECT public_key FROM users WHERE id_user = @authorId";
+
+                        using (var reader = await cursor.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                publicKey = reader.GetFieldValue<byte[]>(0);
+                            }
+                        }
+                    }
+                }
+
+                int messageIds = 0;
+
+                using (var command = dbConnection.CreateCommand())
+                {
+                    command.CommandText = @"
+                SELECT m.id_msg, m.time_msg, m.msg, m.is_erase
+                FROM messages m
+                JOIN users u ON m.id_sender = u.id_user
+                WHERE u.id_chat = @chatId 
+                  AND m.id_sender = @authorId
+                  AND ((m.id_msg >= @messageIds) OR (m.is_erase = true))
+                ORDER BY m.id_msg";
+                    command.Parameters.AddWithValue("@chatId", chatId);
+                    command.Parameters.AddWithValue("@authorId", idUsers[i]);
+                    command.Parameters.AddWithValue("@messageIds", messageIds);
+
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            int messageId = reader.GetInt32(0);
+                            DateTime timeMsg = reader.GetDateTime(1);
+                            byte[] msg = reader.GetFieldValue<byte[]>(2);
+                            bool is_erase = reader.GetBoolean(3);
+
+                            if (!messagesByAuthors.ContainsKey((idUsers[i], publicKey)))
+                            {
+                                messagesByAuthors[(idUsers[i], publicKey)] = new List<Message>();
+                            }
+
+                            messagesByAuthors[(idUsers[i], publicKey)].Add(new Message
                             {
                                 id_msg = messageId,
                                 time_msg = timeMsg,
