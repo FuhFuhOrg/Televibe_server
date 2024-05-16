@@ -345,6 +345,8 @@ namespace shooter_server
                     // ChatCreate requestId chatPassword isPrivacy
                     List<string> credentials = new List<string>(sqlCommand.Split(' '));
 
+                    Console.WriteLine(sqlCommand);
+
                     credentials.RemoveAt(0);
 
                     int requestId = int.Parse(credentials[0]);
