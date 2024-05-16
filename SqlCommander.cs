@@ -518,6 +518,8 @@ namespace shooter_server
                         {
                             if (await reader.ReadAsync())
                             {
+                                reader.Close();
+
                                 cursor.Parameters.AddWithValue("idUser", idUser);
                                 cursor.Parameters.AddWithValue("idChat", idChat);
                                 cursor.Parameters.AddWithValue("publicKey", publicKey);
