@@ -698,7 +698,6 @@ namespace shooter_server
             }
         }
 
-
         // Вернуть сообщения
         private async Task GetMessages(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
