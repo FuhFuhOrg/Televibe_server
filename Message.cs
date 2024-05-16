@@ -8,7 +8,7 @@ namespace shooter_server
         public DateTime time_msg { get; set; }
         public byte[] msg { get; set; }
         public byte[] public_key { get; set; }
-        public string is_erase { get; set; }
+        public bool is_erase { get; set; }
 
         public Message()
         {

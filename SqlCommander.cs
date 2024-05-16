@@ -760,7 +760,14 @@ namespace shooter_server
 
                     foreach (var msg in messages)
                     {
-                        str.Append($" {msg.id_msg} {msg.is_erase} {msg.time_msg.ToString("dd.MM.yyyy HH:mm:ss")} {Convert.ToBase64String(msg.msg)}");
+                        if (msg.is_erase)
+                        {
+                            str.Append($" {msg.id_msg} {msg.is_erase}");
+                        }
+                        else
+                        {
+                            str.Append($" {msg.id_msg} {msg.is_erase} {msg.time_msg.ToString("dd.MM.yyyy HH:mm:ss")} {Convert.ToBase64String(msg.msg)}");
+                        }    
                     }
                 }
             }
@@ -833,7 +840,7 @@ namespace shooter_server
                 JOIN users u ON m.id_sender = u.id_user
                 WHERE u.id_chat = @chatId 
                   AND m.id_sender = @authorId
-                  AND (m.id_msg = ANY(@messageIds) OR m.id_msg > @lastMsgId)
+                  AND ((m.id_msg = ANY(@messageIds) OR m.id_msg > @lastMsgId) OR (m.is_erase = true))
                 ORDER BY m.id_msg";
                     command.Parameters.AddWithValue("@chatId", chatId);
                     command.Parameters.AddWithValue("@authorId", authorId);
@@ -859,7 +866,7 @@ namespace shooter_server
                                 id_msg = messageId,
                                 time_msg = timeMsg,
                                 msg = msg,
-                                is_erase = is_erase ? "false" : ""
+                                is_erase = is_erase
                             });
                         }
                     }
