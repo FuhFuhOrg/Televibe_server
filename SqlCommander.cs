@@ -799,7 +799,7 @@ namespace shooter_server
                 using (var command = dbConnection.CreateCommand())
                 {
                     command.CommandText = @"
-                SELECT m.id_msg, m.time_msg, m.msg
+                SELECT m.id_msg, m.time_msg, m.msg, m.is_erase
                 FROM messages m
                 JOIN users u ON m.id_sender = u.id_user
                 WHERE u.id_chat = @chatId 
@@ -818,6 +818,7 @@ namespace shooter_server
                             int messageId = reader.GetInt32(0);
                             DateTime timeMsg = reader.GetDateTime(1);
                             byte[] msg = reader.GetFieldValue<byte[]>(2);
+                            bool is_erase = reader.GetBoolean(3);
 
                             if (!messagesByAuthors.ContainsKey(authorId))
                             {
@@ -828,12 +829,14 @@ namespace shooter_server
                             {
                                 id_msg = messageId,
                                 time_msg = timeMsg,
-                                msg = msg
+                                msg = msg,
+                                is_erase = is_erase
                             });
                         }
                     }
                 }
             }
+
             return (index, messagesByAuthors);
         }
 
