@@ -527,6 +527,8 @@ namespace shooter_server
                                 await cursor.ExecuteNonQueryAsync();
 
                                 Console.WriteLine($"Success");
+
+                                lobby.SendMessagePlayer(idUser.ToString(), ws, requestId);
                             }
                             else
                             {
@@ -534,8 +536,6 @@ namespace shooter_server
                             }
                         }
                     }
-
-                    lobby.SendMessagePlayer(idUser.ToString(), ws, requestId);
                 }
             }
             catch (Exception e)
