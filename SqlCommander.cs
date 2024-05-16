@@ -853,40 +853,50 @@ namespace shooter_server
         {
             try
             {
+                // SendMessage requestId id_sender time_msg msg
+                List<string> credentials = new List<string>(sqlCommand.Split(' '));
+
+                credentials.RemoveAt(0);
+
+                int requestId = int.Parse(credentials[0]);
+                int idSender = int.Parse(credentials[1]);
+
+                string time1 = credentials[2];
+                string time2 = credentials[3];
+                string time = time1 + " " + time2;
+                string format = "yyyy-MM-dd HH:mm:ss";
+                CultureInfo provider = CultureInfo.InvariantCulture;
+                DateTimeOffset timeMsg = DateTimeOffset.ParseExact(time, format, provider);
+
+                byte[] msg = Convert.FromBase64String(credentials[4]);
+
+                long idMsg;
+
                 using (var cursor = dbConnection.CreateCommand())
                 {
-                    // SendMessage requestId id_sender time_msg msg
-                    List<string> credentials = new List<string>(sqlCommand.Split(' '));
-
-                    credentials.RemoveAt(0);
-
-                    int requestId = int.Parse(credentials[0]);
-                    int idSender = int.Parse(credentials[1]);
-
-                    string time1 = credentials[2];
-                    string time2 = credentials[3];
-                    string time = time1 + " " + time2;
-                    string format = "yyyy-MM-dd HH:mm:ss";
-                    CultureInfo provider = CultureInfo.InvariantCulture;
-                    DateTimeOffset timeMsg = DateTimeOffset.ParseExact(time, format, provider);
-
-                    byte[]  msg = Convert.FromBase64String(credentials[4]);
-
-                    cursor.Parameters.AddWithValue("idSender", idSender);
-
-                    // Получение количества сообщений от данного пользователя
-                    cursor.CommandText = "SELECT COUNT(*) FROM messages WHERE id_sender = @idSender";
+                    cursor.CommandText = "SELECT id_msg FROM messages WHERE msg = '' AND id_sender = @idSender";
                     cursor.Parameters.AddWithValue("id_sender", idSender);
-                    long idMsg = (long)await cursor.ExecuteScalarAsync();
 
+                    object result = await cursor.ExecuteScalarAsync();
+                    if (result != null)
+                    {
+                        idMsg = (long)result;
+                    }
+                    else
+                    {
+                        cursor.CommandText = "SELECT COUNT(*) FROM messages WHERE id_sender = @idSender";
+                        idMsg = (long)await cursor.ExecuteScalarAsync();
+                    }
+                }
 
+                using (var cursor = dbConnection.CreateCommand())
+                {
+                    cursor.CommandText = "INSERT INTO messages (id_msg, id_sender, time_msg, msg) VALUES (@idMsg, @idSender, @timeMsg, @msg)";
                     // Добавление параметров в команду для предотвращения SQL-инъекций
                     cursor.Parameters.AddWithValue("idSender", idSender);
                     cursor.Parameters.AddWithValue("timeMsg", timeMsg);
                     cursor.Parameters.AddWithValue("msg", msg);
                     cursor.Parameters.AddWithValue("idMsg", idMsg);
-
-                    cursor.CommandText = "INSERT INTO messages (id_msg, id_sender, time_msg, msg) VALUES (@idMsg, @idSender, @timeMsg, @msg)";
 
                     await cursor.ExecuteNonQueryAsync();
 
@@ -897,6 +907,6 @@ namespace shooter_server
             {
                 Console.WriteLine($"Error SendMessage command: {e}");
             }
-        }      
+        }
     }
 }
