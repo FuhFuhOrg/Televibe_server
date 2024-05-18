@@ -398,7 +398,7 @@ namespace shooter_server
 
                     await cursor.ExecuteNonQueryAsync();
 
-                    lobby.SendMessagePlayer($"true", ws, requestId);
+                    lobby.SendMessagePlayer("true", ws, requestId);
                 }
             }
             catch (Exception e)
