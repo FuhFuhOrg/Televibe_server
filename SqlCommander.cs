@@ -425,7 +425,7 @@ namespace shooter_server
                     int idMsg = int.Parse(credentials[2]);
 
                     cursor.Parameters.AddWithValue("idMsg", idMsg);
-                    cursor.Parameters.AddWithValue("id_sender", idSender);
+                    cursor.Parameters.AddWithValue("idSender", idSender);
 
                     cursor.CommandText = @"DELETE FROM messages WHERE (id_msg = @idMsg AND id_sender = @idSender);";
 
