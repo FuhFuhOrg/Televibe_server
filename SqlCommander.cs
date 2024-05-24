@@ -427,7 +427,7 @@ namespace shooter_server
                     cursor.Parameters.AddWithValue("idMsg", idMsg);
                     cursor.Parameters.AddWithValue("id_sender", idSender);
 
-                    cursor.CommandText = @"DELETE FROM messages WHERE (idMsg = @idMsg AND id_sender = @idSender);";
+                    cursor.CommandText = @"DELETE FROM messages WHERE (id_msg = @idMsg AND id_sender = @idSender);";
 
                     await cursor.ExecuteNonQueryAsync();
 
