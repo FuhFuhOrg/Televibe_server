@@ -730,7 +730,7 @@ namespace shooter_server
                 CultureInfo provider = CultureInfo.InvariantCulture;
                 DateTimeOffset timeMsg = DateTimeOffset.ParseExact(time, format, provider);
 
-                byte[] msg;
+                byte[] msg = new byte[0];
                 try
                 {
                     msg = Convert.FromBase64String(credentials[4]);
