@@ -730,7 +730,15 @@ namespace shooter_server
                 CultureInfo provider = CultureInfo.InvariantCulture;
                 DateTimeOffset timeMsg = DateTimeOffset.ParseExact(time, format, provider);
 
-                byte[] msg = Convert.FromBase64String(credentials[4]);
+                try
+                {
+                    byte[] msg = Convert.FromBase64String(credentials[4]);
+                }
+                catch (FormatException ex)
+                {
+                    // Handle the format exception (e.g., invalid Base64 string)
+                    Console.WriteLine("Error decoding Base64 string: " + ex.Message);
+                }
 
                 long idMsg;
 
