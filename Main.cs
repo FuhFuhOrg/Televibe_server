@@ -14,7 +14,7 @@ namespace shooter_server
     class WebSocketServerExample
     {
         private static int kilobite = 1024;
-        private static int bufferSize = kilobite * 64;
+        private static int bufferSize = kilobite * kilobite * 16;
         private static Lobby mainLobby = new Lobby();
 
         static async Task Main()
