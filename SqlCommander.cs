@@ -82,6 +82,12 @@ namespace shooter_server
                         case string s when s.StartsWith("DeleteAllMessagesFromUser"):
                             await Task.Run(() => DeleteAllMessagesFromUser(sqlCommand, senderId, dbConnection, lobby, webSocket));
                             break;
+                        case string s when s.StartsWith("AddUserData"):
+                            await Task.Run(() => AddUserData(sqlCommand, senderId, dbConnection, lobby, webSocket));
+                            break;
+                        case string s when s.StartsWith("GetAllUserData"):
+                            await Task.Run(() => GetAllUserData(sqlCommand, senderId, dbConnection, lobby, webSocket));
+                            break;
                         default:
                             Console.WriteLine("Command not found");
                             break;
@@ -778,6 +784,102 @@ namespace shooter_server
             catch (Exception e)
             {
                 Console.WriteLine($"Error SendMessage command: {e}");
+            }
+        }
+
+
+        // Получение всех данных по id_user
+        private async Task GetAllUserData(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
+        {
+            try
+            {
+                // SendMessage requestId id_user
+                List<string> credentials = new List<string>(sqlCommand.Split(' '));
+
+                credentials.RemoveAt(0);
+
+                int requestId = int.Parse(credentials[0]);
+
+                int idUser = int.Parse(credentials[1]);
+
+                using (var cursor = dbConnection.CreateCommand())
+                {
+                    cursor.CommandText = "SELECT *" +
+                        " FROM users" +
+                        " JOIN messages ON users.id_user = messages.id_sender" +
+                        " WHERE users.id_user = @idUser";
+
+                    cursor.Parameters.AddWithValue("idUser", idUser);
+
+                    using (var reader = await cursor.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            // users
+                            var idChat = reader.IsDBNull(1) ? "-" : reader.GetString(1);
+                            var publicKey = reader.IsDBNull(2) ? "-" : BitConverter.ToString(reader.GetFieldValue<byte[]>(2));
+                            var idMsg = reader.IsDBNull(3) ? "-" : reader.GetInt32(3).ToString();
+
+                            // messages
+                            var timeMsg = reader.IsDBNull(5) ? "-" : reader.GetDateTime(5).ToString();
+                            var msg = reader.IsDBNull(6) ? "-" : BitConverter.ToString(reader.GetFieldValue<byte[]>(6));
+                            var isErase = reader.IsDBNull(7) ? "-" : reader.GetBoolean(7).ToString();
+                            var emoji = reader.IsDBNull(8) ? "-" : reader.GetInt32(8).ToString();
+                            var nickname = reader.IsDBNull(9) ? "-" : reader.GetString(9);
+
+                            var result = idChat + " " + publicKey + " " + idMsg + " " + timeMsg + " " + msg + " " + isErase + " " + emoji + " " + nickname;
+
+                            lobby.SendMessagePlayer(result, ws, requestId);
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error GetAllUserData command: {e}");
+            }
+        }
+
+
+        // Регистрация юзера
+        private async Task AddUserData(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
+        {
+            try
+            {
+                // SendMessage requestId id_user user_content
+                List<string> credentials = new List<string>(sqlCommand.Split(' '));
+
+                credentials.RemoveAt(0);
+
+                int requestId = int.Parse(credentials[0]);
+
+                string idUser = credentials[1];
+
+                byte[] userContent = [];
+                try
+                {
+                    userContent = Convert.FromBase64String(credentials[2]);
+                }
+                catch (FormatException ex)
+                {
+                    Console.WriteLine("Error decoding Base64 string: " + ex.Message);
+                }
+
+                using (var cursor = dbConnection.CreateCommand())
+                {
+                    cursor.CommandText = "INSERT INTO user_data (id_user, user_content) VALUES (@idUser, @userContent)";
+                    // Добавление параметров в команду для предотвращения SQL-инъекций
+                    cursor.Parameters.AddWithValue("idUser", idUser);
+                    cursor.Parameters.AddWithValue("userContent", userContent);
+
+                    await cursor.ExecuteNonQueryAsync();
+
+                    lobby.SendMessagePlayer($"true", ws, requestId);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error AddUserData command: {e}");
             }
         }
     }
