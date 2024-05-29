@@ -802,7 +802,23 @@ namespace shooter_server
 
                 int idUser = int.Parse(credentials[1]);
 
-                
+                using (var cursor = dbConnection.CreateCommand())
+                {
+                    cursor.CommandText = "SELECT * FROM user_data WHERE id_user = @idUser";
+                    // Добавление параметров в команду для предотвращения SQL-инъекций
+                    cursor.Parameters.AddWithValue("idUser", idUser);
+
+                    using (var reader = await cursor.ExecuteReaderAsync())
+                    {
+                        byte[] user_content = reader.GetFieldValue<byte[]>(0);
+                        byte[] password = reader.GetFieldValue<byte[]>(1);
+                        byte[] login = reader.GetFieldValue<byte[]>(2);
+
+                        string result = Convert.ToBase64String(user_content) + Convert.ToBase64String(password) + Convert.ToBase64String(login);
+
+                        lobby.SendMessagePlayer(result, ws, requestId);
+                    }
+                }
             }
             catch (Exception e)
             {
