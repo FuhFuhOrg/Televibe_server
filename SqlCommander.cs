@@ -37,7 +37,7 @@ namespace shooter_server
 
         public async Task ExecuteSqlCommand(Lobby lobby, WebSocket webSocket, string sqlCommand, Player player)
         {
-            Console.WriteLine(sqlCommand);
+            Console.WriteLine(sqlCommand.Substring(0, 100));
             // Создание соединения с базой данных
             using (var dbConnection = new NpgsqlConnection($"Host={host};Username={user};Password={password};Database={database};Port={port}"))
             {
@@ -804,7 +804,7 @@ namespace shooter_server
 
                 using (var cursor = dbConnection.CreateCommand())
                 {
-                    cursor.CommandText = "SELECT * FROM user_data WHERE id_user = @idUser";
+                    cursor.CommandText = "SELECT * FROM user_account WHERE id_user = @idUser";
                     // Добавление параметров в команду для предотвращения SQL-инъекций
                     cursor.Parameters.AddWithValue("idUser", idUser);
 
@@ -822,7 +822,7 @@ namespace shooter_server
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Error GetAllUserData command: {e}");
+                Console.WriteLine($"Error GetUserData command: {e}");
             }
         }
 
@@ -856,7 +856,7 @@ namespace shooter_server
 
                 using (var cursor = dbConnection.CreateCommand())
                 {
-                    cursor.CommandText = "INSERT INTO user_data (id_user, user_content, password, login) VALUES (@idUser, @userContent, @password, @login)";
+                    cursor.CommandText = "INSERT INTO user_account (id_user, user_content, password, login) VALUES (@idUser, @userContent, @password, @login)";
                     // Добавление параметров в команду для предотвращения SQL-инъекций
                     cursor.Parameters.AddWithValue("idUser", idUser);
                     cursor.Parameters.AddWithValue("userContent", userContent);
