@@ -406,13 +406,13 @@ namespace shooter_server
                         string chatPassword = credentials.Count == 2 ? credentials[1] : "";
 
                         cursor.Parameters.AddWithValue("idChat", idChat);
-                        if (chatPassword != "")
+                        if (chatPassword != null)
                         {
                             cursor.Parameters.AddWithValue("chatPassword", chatPassword);
                         }
 
                         cursor.CommandText = @"SELECT id_chat FROM chat WHERE id_chat = @idChat" +
-                            (chatPassword != "" ? " AND chat_password = @chatPassword" : "") + ";";
+                            (chatPassword != null ? " AND chat_password = @chatPassword" : "") + ";";
 
                         using (var reader = cursor.ExecuteReader())
                         {
