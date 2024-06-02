@@ -37,7 +37,6 @@ namespace shooter_server
 
         public async Task ExecuteSqlCommand(Lobby lobby, WebSocket webSocket, string sqlCommand, Player player)
         {
-            Console.WriteLine(sqlCommand);
             // Создание соединения с базой данных
             using (var dbConnection = new NpgsqlConnection($"Host={host};Username={user};Password={password};Database={database};Port={port}"))
             {
