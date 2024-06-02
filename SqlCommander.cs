@@ -310,7 +310,8 @@ namespace shooter_server
         }
 
 
-        private async Task addUserToChat(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
+        // Существует ли такой чат
+        private async Task ExistChat(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
             try
             {
@@ -321,41 +322,105 @@ namespace shooter_server
                     int idUser = GenerateUniqueUserId(dbConnection);
                     string fullIdChat = "";
 
+                    // addUserToChat requestId idChat chatPassword
                     List<string> credentials = new List<string>(sqlCommand.Split(' '));
                     credentials.RemoveAt(0);
 
                     int requestId = int.Parse(credentials[0]);
                     credentials.RemoveAt(0);
 
-                    string idChat = credentials[0];
+                    if (credentials.Count == 2 || credentials.Count == 1)
+                    {
+                        // Если чат с паролем
+                        string idChat = credentials[0];
+                        String chatPassword = credentials.Count == 2 ? credentials[1] : "";
+
+                        cursor.Parameters.AddWithValue("idChat", idChat);
+                        if (chatPassword != "")
+                        {
+                            cursor.Parameters.AddWithValue("chatPassword", chatPassword);
+                        }
+
+                        cursor.CommandText = @"SELECT id_chat FROM chat WHERE id_chat = @idChat" +
+                            (chatPassword != "" ? " AND chat_password = @chatPassword" : "") + ";";
+
+
+                        using (var reader = cursor.ExecuteReader())
+                        {
+                            if (await reader.ReadAsync())
+                            {
+                                fullIdChat = reader.GetString("id_chat");
+
+                                if (fullIdChat == idChat)
+                                {
+                                    Console.WriteLine("A user can be added");
+                                    lobby.SendMessagePlayer("true", ws, requestId);
+                                }
+                                else
+                                {
+                                    Console.WriteLine($"Password or id entered incorrectly");
+                                    lobby.SendMessagePlayer("false", ws, requestId);
+                                }
+                            }
+                            else
+                            {
+                                Console.WriteLine("No matching records found.");
+                                lobby.SendMessagePlayer("false", ws, requestId);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error ExistChat command: {e}");
+            }
+        }
+
+
+        // Добавить пользователя в чат
+        private async Task addUserToChat(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
+        {
+            try
+            {
+                using (var cursor = dbConnection.CreateCommand())
+                {
+                    Console.WriteLine(sqlCommand);
+
+                    int idUser = GenerateUniqueUserId(dbConnection);
+
+                    // addUserToChat requestId publicKey idChat chatPassword 
+                    List<string> credentials = new List<string>(sqlCommand.Split(' '));
                     credentials.RemoveAt(0);
 
-                    string chatPassword = credentials.Count > 0 ? credentials[0] : "";
+                    int requestId = int.Parse(credentials[0]);
+                    credentials.RemoveAt(0);
 
-                    cursor.Parameters.AddWithValue("idChat", idChat);
-                    if (chatPassword != "")
+                    byte[] publicKey = Convert.FromBase64String(credentials[0]);
+                    credentials.RemoveAt(0);
+
+                    if (credentials.Count == 2 || credentials.Count == 1)
                     {
+                        // Если чат с паролем
+                        string idChat = credentials[0];
+                        string chatPassword = credentials.Count == 2 ? credentials[1] : "";
+
+                        cursor.Parameters.AddWithValue("idChat", idChat);
                         cursor.Parameters.AddWithValue("chatPassword", chatPassword);
-                    }
 
-                    cursor.CommandText = @"SELECT id_chat FROM chat WHERE id_chat = @idChat" +
-                        (chatPassword != "" ? " AND chat_password = @chatPassword" : "") + ";";
+                        cursor.CommandText = @"SELECT id_chat FROM chat WHERE id_chat = @idChat" +
+                            (chatPassword != "" ? " AND chat_password = @chatPassword" : "") + ";";
 
-                    using (var reader = cursor.ExecuteReader())
-                    {
-                        if (await reader.ReadAsync())
+                        Console.WriteLine("\n\n\n" + chatPassword + "\n" + idChat + "\n\n\n");
+
+                        using (var reader = cursor.ExecuteReader())
                         {
-                            fullIdChat = reader.GetString("id_chat");
-
-                            if (fullIdChat == idChat)
+                            if (await reader.ReadAsync())
                             {
-                                Console.WriteLine("A user can be added");
                                 reader.Close();
 
-                                byte[] publicKey = Convert.FromBase64String(credentials[0]);
-                                credentials.RemoveAt(0);
-
                                 cursor.Parameters.AddWithValue("idUser", idUser);
+                                cursor.Parameters.AddWithValue("idChat", idChat);
                                 cursor.Parameters.AddWithValue("publicKey", publicKey);
 
                                 cursor.CommandText = @"INSERT INTO users (id_user, id_chat, public_key) VALUES (@idUser, @idChat, @publicKey);";
@@ -368,24 +433,17 @@ namespace shooter_server
                             }
                             else
                             {
-                                Console.WriteLine($"Password or id entered incorrectly");
-                                lobby.SendMessagePlayer("false", ws, requestId);
+                                Console.WriteLine("No matching records found.");
                             }
-                        }
-                        else
-                        {
-                            Console.WriteLine("No matching records found.");
-                            lobby.SendMessagePlayer("false", ws, requestId);
                         }
                     }
                 }
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Error HandleChatRequest command: {e}");
+                Console.WriteLine($"Error addUserToChat command: {e}");
             }
         }
-
 
 
         // Изменение сообщения
