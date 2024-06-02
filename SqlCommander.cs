@@ -414,6 +414,8 @@ namespace shooter_server
                         cursor.CommandText = @"SELECT id_chat FROM chat WHERE id_chat = @idChat" +
                             (chatPassword != null ? " AND chat_password = @chatPassword" : "") + ";";
 
+                        Console.WriteLine("\n\n\n" + chatPassword + "\n" + idChat + "\n\n\n");
+
                         using (var reader = cursor.ExecuteReader())
                         {
                             if (await reader.ReadAsync())
