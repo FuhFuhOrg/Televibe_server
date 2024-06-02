@@ -284,6 +284,7 @@ namespace shooter_server
                     List<string> credentials = new List<string>(sqlCommand.Split(' '));
 
                     credentials.RemoveAt(0);
+                    Console.WriteLine("\n\n" + sqlCommand + "\n\n");
 
                     int requestId = int.Parse(credentials[0]);
                     bool isPrivacy = bool.Parse(credentials[1]);
