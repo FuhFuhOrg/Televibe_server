@@ -832,7 +832,7 @@ namespace shooter_server
 
                 using (var cursor = dbConnection.CreateCommand())
                 {
-                    cursor.CommandText = "SELECT * FROM user_account WHERE login = @login AND password = @password";
+                    cursor.CommandText = "SELECT user_content FROM user_account WHERE login = @login AND password = @password";
                     // Добавление параметров в команду для предотвращения SQL-инъекций
                     cursor.Parameters.AddWithValue("login", login);
                     cursor.Parameters.AddWithValue("password", password);
@@ -841,7 +841,7 @@ namespace shooter_server
                     {
                         if (reader.Read())
                         {
-                            byte[] user_content = reader.GetFieldValue<byte[]>(2);
+                            byte[] user_content = reader.GetFieldValue<byte[]>(0);
 
                             string result = Convert.ToBase64String(user_content);
 
