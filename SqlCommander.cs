@@ -272,6 +272,34 @@ namespace shooter_server
         }
 
 
+        private int GenerateUniqueUserIdAccount(NpgsqlConnection dbConnection)
+        {
+            int maxId = -1;
+
+            try
+            {
+                using (var cursor = dbConnection.CreateCommand())
+                {
+                    cursor.CommandText = $"SELECT COALESCE(MAX(id_user), 0) FROM user_account";
+
+                    var result = cursor.ExecuteScalar();
+
+                    if (result != null && result != DBNull.Value)
+                    {
+                        maxId = (int)result;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error GenerateUniqueUserId command: {e}");
+                return -1;
+            }
+
+            return maxId == -1 ? -1 : maxId + 1;
+        }
+
+
         // Создание нового чата 
         private async Task ChatCreate(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
@@ -831,7 +859,7 @@ namespace shooter_server
         {
             try
             {
-                // SendMessage requestId id_user user_content password login
+                // SendMessage requestId id_user password login user_content
                 List<string> credentials = new List<string>(sqlCommand.Split(' '));
 
                 credentials.RemoveAt(0);
