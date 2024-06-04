@@ -813,7 +813,7 @@ namespace shooter_server
                         byte[] password = reader.GetFieldValue<byte[]>(1);
                         byte[] login = reader.GetFieldValue<byte[]>(2);
 
-                        string result = Convert.ToBase64String(user_content) + Convert.ToBase64String(password) + Convert.ToBase64String(login);
+                        string result = Convert.ToBase64String(login) + Convert.ToBase64String(password) + Convert.ToBase64String(user_content);
 
                         lobby.SendMessagePlayer(result, ws, requestId);
                     }
@@ -840,18 +840,18 @@ namespace shooter_server
 
                 string idUser = credentials[1];
 
+                byte[] password = Convert.FromBase64String(credentials[2]);
+                byte[] login = Convert.FromBase64String(credentials[3]);
+
                 byte[] userContent = [];
                 try
                 {
-                    userContent = Convert.FromBase64String(credentials[2]);
+                    userContent = Convert.FromBase64String(credentials[4]);
                 }
                 catch (FormatException ex)
                 {
                     Console.WriteLine("Error decoding Base64 string: " + ex.Message);
                 }
-
-                byte[] password = Convert.FromBase64String(credentials[3]);
-                byte[] login = Convert.FromBase64String(credentials[4]);
 
                 using (var cursor = dbConnection.CreateCommand())
                 {
