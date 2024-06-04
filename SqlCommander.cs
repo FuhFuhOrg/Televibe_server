@@ -84,7 +84,7 @@ namespace shooter_server
                         case string s when s.StartsWith("AddUserData"):
                             await Task.Run(() => AddUserData(sqlCommand, senderId, dbConnection, lobby, webSocket));
                             break;
-                        case string s when s.StartsWith("GetAllUserData"):
+                        case string s when s.StartsWith("GetUserData"):
                             await Task.Run(() => GetUserData(sqlCommand, senderId, dbConnection, lobby, webSocket));
                             break;
                         default:
