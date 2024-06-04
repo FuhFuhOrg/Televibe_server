@@ -869,7 +869,7 @@ namespace shooter_server
                 byte[] password = Convert.FromBase64String(credentials[1]);
                 byte[] login = Convert.FromBase64String(credentials[2]);
 
-                byte[] userContent = [];
+                byte[] userContent = Array.Empty<byte>();
                 try
                 {
                     userContent = Convert.FromBase64String(credentials[3]);
@@ -879,15 +879,40 @@ namespace shooter_server
                     Console.WriteLine("Error decoding Base64 string: " + ex.Message);
                 }
 
-                using (var cursor = dbConnection.CreateCommand())
+                // Check if the login already exists
+                using (var checkCmd = dbConnection.CreateCommand())
                 {
-                    cursor.CommandText = "INSERT INTO user_account (user_content, password, login) VALUES (@userContent, @password, @login)";
-                    // Добавление параметров в команду для предотвращения SQL-инъекций
-                    cursor.Parameters.AddWithValue("userContent", userContent);
-                    cursor.Parameters.AddWithValue("login", login);
-                    cursor.Parameters.AddWithValue("password", password);
+                    checkCmd.CommandText = "SELECT COUNT(*) FROM user_account WHERE login = @login";
+                    checkCmd.Parameters.AddWithValue("login", login);
 
-                    await cursor.ExecuteNonQueryAsync();
+                    int count = Convert.ToInt32(await checkCmd.ExecuteScalarAsync());
+
+                    if (count > 0)
+                    {
+                        // Update existing record
+                        using (var updateCmd = dbConnection.CreateCommand())
+                        {
+                            updateCmd.CommandText = "UPDATE user_account SET user_content = @userContent, password = @password WHERE login = @login";
+                            updateCmd.Parameters.AddWithValue("userContent", userContent);
+                            updateCmd.Parameters.AddWithValue("password", password);
+                            updateCmd.Parameters.AddWithValue("login", login);
+
+                            await updateCmd.ExecuteNonQueryAsync();
+                        }
+                    }
+                    else
+                    {
+                        // Insert new record
+                        using (var insertCmd = dbConnection.CreateCommand())
+                        {
+                            insertCmd.CommandText = "INSERT INTO user_account (user_content, password, login) VALUES (@userContent, @password, @login)";
+                            insertCmd.Parameters.AddWithValue("userContent", userContent);
+                            insertCmd.Parameters.AddWithValue("password", password);
+                            insertCmd.Parameters.AddWithValue("login", login);
+
+                            await insertCmd.ExecuteNonQueryAsync();
+                        }
+                    }
 
                     lobby.SendMessagePlayer($"true", ws, requestId);
                 }
@@ -897,5 +922,6 @@ namespace shooter_server
                 Console.WriteLine($"Error AddUserData command: {e}");
             }
         }
+
     }
 }
