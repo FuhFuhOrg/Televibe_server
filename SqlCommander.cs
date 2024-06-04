@@ -832,18 +832,21 @@ namespace shooter_server
 
                 using (var cursor = dbConnection.CreateCommand())
                 {
-                    cursor.CommandText = "SELECT * FROM user_account WHERE login = @login, password = @password";
+                    cursor.CommandText = "SELECT * FROM user_account WHERE login = @login AND password = @password";
                     // Добавление параметров в команду для предотвращения SQL-инъекций
                     cursor.Parameters.AddWithValue("login", login);
                     cursor.Parameters.AddWithValue("password", password);
 
                     using (var reader = await cursor.ExecuteReaderAsync())
                     {
-                        byte[] user_content = reader.GetFieldValue<byte[]>(0);
+                        if (reader.Read())
+                        {
+                            byte[] user_content = reader.GetFieldValue<byte[]>(2);
 
-                        string result = Convert.ToBase64String(user_content);
+                            string result = Convert.ToBase64String(user_content);
 
-                        lobby.SendMessagePlayer(result, ws, requestId);
+                            lobby.SendMessagePlayer(result, ws, requestId);
+                        }
                     }
                 }
             }
