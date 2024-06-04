@@ -838,15 +838,13 @@ namespace shooter_server
 
                 int requestId = int.Parse(credentials[0]);
 
-                string idUser = credentials[1];
-
-                byte[] password = Convert.FromBase64String(credentials[2]);
-                byte[] login = Convert.FromBase64String(credentials[3]);
+                byte[] password = Convert.FromBase64String(credentials[1]);
+                byte[] login = Convert.FromBase64String(credentials[2]);
 
                 byte[] userContent = [];
                 try
                 {
-                    userContent = Convert.FromBase64String(credentials[4]);
+                    userContent = Convert.FromBase64String(credentials[3]);
                 }
                 catch (FormatException ex)
                 {
@@ -855,9 +853,8 @@ namespace shooter_server
 
                 using (var cursor = dbConnection.CreateCommand())
                 {
-                    cursor.CommandText = "INSERT INTO user_account (id_user, user_content, password, login) VALUES (@idUser, @userContent, @password, @login)";
+                    cursor.CommandText = "INSERT INTO user_account (user_content, password, login) VALUES (@userContent, @password, @login)";
                     // Добавление параметров в команду для предотвращения SQL-инъекций
-                    cursor.Parameters.AddWithValue("idUser", idUser);
                     cursor.Parameters.AddWithValue("userContent", userContent);
                     cursor.Parameters.AddWithValue("login", login);
                     cursor.Parameters.AddWithValue("password", password);
