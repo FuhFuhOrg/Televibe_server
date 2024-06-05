@@ -41,13 +41,13 @@ namespace shooter_server
             using (var dbConnection = new NpgsqlConnection($"Host={host};Username={user};Password={password};Database={database};Port={port}"))
             {
                 await dbConnection.OpenAsync();
-                Console.WriteLine(dbConnection.ConnectionString);
+                //Console.WriteLine(dbConnection.ConnectionString);
 
                 int senderId = player.Id;
 
                 if (dbConnection.State != ConnectionState.Open)
                 {
-                    Console.WriteLine("DB connection error");
+                    //Console.WriteLine("DB connection error");
 
                     return;
                 }
@@ -88,13 +88,13 @@ namespace shooter_server
                             await Task.Run(() => GetUserData(sqlCommand, senderId, dbConnection, lobby, webSocket));
                             break;
                         default:
-                            Console.WriteLine("Command not found");
+                            //Console.WriteLine("Command not found");
                             break;
                     }
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine($"Error executing SQL command: {e}");
+                    //Console.WriteLine($"Error executing SQL command: {e}");
                 }
             }
         }
@@ -148,7 +148,7 @@ namespace shooter_server
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Error DeleteMessages command: {e}");
+                //Console.WriteLine($"Error DeleteMessages command: {e}");
             }
         }
 
@@ -181,7 +181,7 @@ namespace shooter_server
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Error DeleteMessages command: {e}");
+                //Console.WriteLine($"Error DeleteMessages command: {e}");
             }
         }
 
@@ -218,7 +218,7 @@ namespace shooter_server
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Error GenerateUniqueUserId command: {e}");
+                //Console.WriteLine($"Error GenerateUniqueUserId command: {e}");
                 return -1;
             }
         }
@@ -247,7 +247,7 @@ namespace shooter_server
 
                     using (var cursor = dbConnection.CreateCommand())
                     {
-                        Console.WriteLine(idChat + " " + idChat.GetType());
+                        //Console.WriteLine(idChat + " " + idChat.GetType());
 
                         cursor.Parameters.AddWithValue("idChat", idChat);
 
@@ -266,7 +266,7 @@ namespace shooter_server
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Error GenerateUniqueUserId command: {e}");
+                //Console.WriteLine($"Error GenerateUniqueUserId command: {e}");
                 return "";
             }
         }
@@ -292,7 +292,7 @@ namespace shooter_server
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Error GenerateUniqueUserId command: {e}");
+                //Console.WriteLine($"Error GenerateUniqueUserId command: {e}");
                 return -1;
             }
 
@@ -311,7 +311,7 @@ namespace shooter_server
                     List<string> credentials = new List<string>(sqlCommand.Split(' '));
 
                     credentials.RemoveAt(0);
-                    Console.WriteLine("\n\n" + "YAAAAAAAAAAAAAAAAAAAAAAA NE JIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIV" + "\n\n");
+                    //Console.WriteLine("\n\n" + "YAAAAAAAAAAAAAAAAAAAAAAA NE JIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIV" + "\n\n");
 
                     int requestId = int.Parse(credentials[0]);
                     bool isPrivacy = bool.Parse(credentials[1]);
@@ -326,14 +326,14 @@ namespace shooter_server
 
                     await cursor.ExecuteNonQueryAsync();
 
-                    Console.WriteLine("Chat Created");
+                    //Console.WriteLine("Chat Created");
 
                     lobby.SendMessagePlayer(idChat, ws, requestId);
                 }
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Error ChatCreate command: {e}");
+                //Console.WriteLine($"Error ChatCreate command: {e}");
             }
         }
 
@@ -345,7 +345,7 @@ namespace shooter_server
             {
                 using (var cursor = dbConnection.CreateCommand())
                 {
-                    Console.WriteLine(sqlCommand);
+                    //Console.WriteLine(sqlCommand);
 
                     int idUser = GenerateUniqueUserId(dbConnection);
 
@@ -371,7 +371,7 @@ namespace shooter_server
                         cursor.CommandText = @"SELECT id_chat FROM chat WHERE id_chat = @idChat" +
                             (chatPassword != "" ? " AND chat_password = @chatPassword" : "") + ";";
 
-                        Console.WriteLine("\n\n\n" + chatPassword + "\n" + idChat + "\n\n\n");
+                        //Console.WriteLine("\n\n\n" + chatPassword + "\n" + idChat + "\n\n\n");
 
                         using (var reader = cursor.ExecuteReader())
                         {
@@ -387,13 +387,13 @@ namespace shooter_server
 
                                 await cursor.ExecuteNonQueryAsync();
 
-                                Console.WriteLine($"Success");
+                                //Console.WriteLine($"Success");
 
                                 lobby.SendMessagePlayer(idUser.ToString(), ws, requestId);
                             }
                             else
                             {
-                                Console.WriteLine("No matching records found.");
+                                //Console.WriteLine("No matching records found.");
                             }
                         }
                     }
@@ -401,7 +401,7 @@ namespace shooter_server
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Error addUserToChat command: {e}");
+                //Console.WriteLine($"Error addUserToChat command: {e}");
             }
         }
 
@@ -436,7 +436,7 @@ namespace shooter_server
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Error RefactorMessage command: {e}");
+                //Console.WriteLine($"Error RefactorMessage command: {e}");
             }
         }
 
@@ -469,7 +469,7 @@ namespace shooter_server
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Error DeleteMessages command: {e}");
+                //Console.WriteLine($"Error DeleteMessages command: {e}");
             }
         }
 
@@ -498,7 +498,7 @@ namespace shooter_server
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Error in GetMessages: {e}");
+                //Console.WriteLine($"Error in GetMessages: {e}");
             }
         }
 
@@ -583,7 +583,7 @@ namespace shooter_server
             {
                 if (!int.TryParse(credentials[index++], out int authorId))
                 {
-                    Console.WriteLine($"Invalid authorId at index {index - 1}");
+                    //Console.WriteLine($"Invalid authorId at index {index - 1}");
                     continue;
                 }
 
@@ -591,13 +591,13 @@ namespace shooter_server
 
                 if (!bool.TryParse(credentials[index++], out bool authorKey))
                 {
-                    Console.WriteLine($"Invalid authorId at index {index - 1}");
+                    //Console.WriteLine($"Invalid authorId at index {index - 1}");
                     continue;
                 }
 
                 if (!int.TryParse(credentials[index++], out int kMsg))
                 {
-                    Console.WriteLine($"Invalid kMsg at index {index - 1}");
+                    //Console.WriteLine($"Invalid kMsg at index {index - 1}");
                     continue;
                 }
 
@@ -626,7 +626,7 @@ namespace shooter_server
                 {
                     if (!int.TryParse(credentials[index++], out int messageId))
                     {
-                        Console.WriteLine($"Invalid messageId at index {index - 1}");
+                        //Console.WriteLine($"Invalid messageId at index {index - 1}");
                         continue;
                     }
                     messageIds.Add(messageId);
@@ -771,7 +771,7 @@ namespace shooter_server
                 catch (FormatException ex)
                 {
                     // Handle the format exception (e.g., invalid Base64 string)
-                    Console.WriteLine("Error decoding Base64 string: " + ex.Message);
+                    //Console.WriteLine("Error decoding Base64 string: " + ex.Message);
                 }
 
                 long idMsg;
@@ -810,7 +810,7 @@ namespace shooter_server
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Error SendMessage command: {e}");
+                //Console.WriteLine($"Error SendMessage command: {e}");
             }
         }
 
@@ -852,7 +852,7 @@ namespace shooter_server
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Error GetUserData command: {e}");
+                //Console.WriteLine($"Error GetUserData command: {e}");
             }
         }
 
@@ -879,7 +879,7 @@ namespace shooter_server
                 }
                 catch (FormatException ex)
                 {
-                    Console.WriteLine("Error decoding Base64 string: " + ex.Message);
+                    //Console.WriteLine("Error decoding Base64 string: " + ex.Message);
                 }
 
                 // Check if the login already exists
@@ -922,7 +922,7 @@ namespace shooter_server
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Error AddUserData command: {e}");
+                //Console.WriteLine($"Error AddUserData command: {e}");
             }
         }
 
