@@ -822,6 +822,10 @@ namespace shooter_server
                     lobby.SendMessagePlayer($"true", ws, requestId);
                 }
             }
+            catch (Exception e)
+            {
+                //Console.WriteLine($"Error SendMessage command: {e}");
+            }
         }
 
 
