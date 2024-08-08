@@ -775,7 +775,7 @@ namespace shooter_server
                     //Console.WriteLine("Error decoding Base64 string: " + ex.Message);
                 }
 
-                string idChat;
+                string idChat = "";
                 using (var cursor = dbConnection.CreateCommand())
                 {
                     cursor.Parameters.AddWithValue("idSender", idSender);
