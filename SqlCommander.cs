@@ -977,7 +977,7 @@ namespace shooter_server
             }
             catch (Exception e)
             {
-                //Console.WriteLine($"Error GetUserData command: {e}");
+                Console.WriteLine($"Error GetUserData command: {e}");
             }
         }
 
