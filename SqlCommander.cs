@@ -968,6 +968,7 @@ namespace shooter_server
                     cursor.Parameters.AddWithValue("password", password);
 
                     var result = await cursor.ExecuteScalarAsync();
+                    Debug.WriteLine(result);
                     if (result != null)
                     {
                         lobby.SendMessagePlayer("-", ws, requestId);
