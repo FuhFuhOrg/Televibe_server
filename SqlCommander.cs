@@ -90,6 +90,9 @@ namespace shooter_server
                         case string s when s.StartsWith("GetUserData"):
                             await Task.Run(() => GetUserData(sqlCommand, senderId, dbConnection, lobby, webSocket));
                             break;
+                        case string s when s.StartsWith("Login"):
+                            await Task.Run(() => Login(sqlCommand, senderId, dbConnection, lobby, webSocket));
+                            break;
                         default:
                             Console.WriteLine("Command not found");
                             break;
@@ -932,6 +935,47 @@ namespace shooter_server
                             string result = Convert.ToBase64String(user_content);
 
                             lobby.SendMessagePlayer(result, ws, requestId);
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                //Console.WriteLine($"Error GetUserData command: {e}");
+            }
+        }
+
+
+        private async Task Login(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
+        {
+            try
+            {
+                // SendMessage requestId id_user
+                List<string> credentials = new List<string>(sqlCommand.Split(' '));
+
+                credentials.RemoveAt(0);
+
+                int requestId = int.Parse(credentials[0]);
+
+                byte[] login = Convert.FromBase64String(credentials[1]);
+                byte[] password = Convert.FromBase64String(credentials[2]);
+
+                using (var cursor = dbConnection.CreateCommand())
+                {
+                    cursor.CommandText = "SELECT user_content FROM user_account WHERE login = @login AND password = @password";
+                    // Добавление параметров в команду для предотвращения SQL-инъекций
+                    cursor.Parameters.AddWithValue("login", login);
+                    cursor.Parameters.AddWithValue("password", password);
+
+                    using (var reader = await cursor.ExecuteReaderAsync())
+                    {
+                        if (reader.Read())
+                        {
+                            byte[] user_content = reader.GetFieldValue<byte[]>(0);
+
+                            string result = Convert.ToBase64String(user_content);
+
+                            lobby.SendMessagePlayer("-", ws, requestId);
                         }
                     }
                 }
