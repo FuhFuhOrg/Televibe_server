@@ -91,7 +91,7 @@ namespace shooter_server
                             await Task.Run(() => GetUserData(sqlCommand, senderId, dbConnection, lobby, webSocket));
                             break;
                         default:
-                            //Console.WriteLine("Command not found");
+                            Console.WriteLine("Command not found");
                             break;
                     }
                 }
