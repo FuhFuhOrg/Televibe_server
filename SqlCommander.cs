@@ -967,16 +967,10 @@ namespace shooter_server
                     cursor.Parameters.AddWithValue("login", login);
                     cursor.Parameters.AddWithValue("password", password);
 
-                    using (var reader = await cursor.ExecuteReaderAsync())
+                    var result = await cursor.ExecuteScalarAsync();
+                    if (result != null)
                     {
-                        if (reader.Read())
-                        {
-                            byte[] user_content = reader.GetFieldValue<byte[]>(0);
-
-                            string result = Convert.ToBase64String(user_content);
-
-                            lobby.SendMessagePlayer("-", ws, requestId);
-                        }
+                        lobby.SendMessagePlayer("-", ws, requestId);
                     }
                 }
             }
