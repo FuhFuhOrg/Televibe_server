@@ -93,6 +93,12 @@ namespace shooter_server
                         case string s when s.StartsWith("Login"):
                             await Task.Run(() => Login(sqlCommand, senderId, dbConnection, lobby, webSocket));
                             break;
+                        case string s when s.StartsWith("AltLogin"):
+                            await Task.Run(() => AltLogin(sqlCommand, senderId, dbConnection, lobby, webSocket));
+                            break;
+                        case string s when s.StartsWith("AltRegister"):
+                            await Task.Run(() => AltRegister(sqlCommand, senderId, dbConnection, lobby, webSocket));
+                            break;
                         default:
                             Console.WriteLine("Command not found");
                             break;
@@ -945,6 +951,113 @@ namespace shooter_server
             }
         }
 
+        private async Task AltLogin(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
+        {
+            try
+            {
+                // SendMessage requestId id_user
+                List<string> credentials = new List<string>(sqlCommand.Split(' '));
+
+                credentials.RemoveAt(0);
+
+                int requestId = int.Parse(credentials[0]);
+
+                byte[] password = Convert.FromBase64String(credentials[1]);
+                byte[] login = Convert.FromBase64String(credentials[2]);
+
+                using (var cursor = dbConnection.CreateCommand())
+                {
+                    cursor.CommandText = "SELECT user_content FROM user_account WHERE login = @login AND password = @password";
+                    // Добавление параметров в команду для предотвращения SQL-инъекций
+                    cursor.Parameters.AddWithValue("login", login);
+                    cursor.Parameters.AddWithValue("password", password);
+
+                    using (var reader = await cursor.ExecuteReaderAsync())
+                    {
+                        if (reader.Read())
+                        {
+                            byte[] user_content = reader.GetFieldValue<byte[]>(0);
+
+                            string result = Convert.ToBase64String(user_content);
+
+                            lobby.SendMessagePlayer(result, ws, requestId);
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error GetUserData command: {e}");
+            }
+        }
+
+        private async Task AltRegister(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
+        {
+            try
+            {
+                // SendMessage requestId id_user password login user_content
+                List<string> credentials = new List<string>(sqlCommand.Split(' '));
+
+                credentials.RemoveAt(0);
+
+                int requestId = int.Parse(credentials[0]);
+
+                byte[] password = Convert.FromBase64String(credentials[1]);
+                byte[] login = Convert.FromBase64String(credentials[2]);
+
+                byte[] userContent = Array.Empty<byte>();
+                try
+                {
+                    userContent = Convert.FromBase64String(credentials[3]);
+                }
+                catch (FormatException ex)
+                {
+                    //Console.WriteLine("Error decoding Base64 string: " + ex.Message);
+                }
+
+                // Check if the login already exists
+                using (var checkCmd = dbConnection.CreateCommand())
+                {
+                    checkCmd.CommandText = "SELECT COUNT(*) FROM user_account WHERE login = @login";
+                    checkCmd.Parameters.AddWithValue("login", login);
+
+                    int count = Convert.ToInt32(await checkCmd.ExecuteScalarAsync());
+
+                    if (count > 0)
+                    {
+                        // Update existing record
+                        using (var updateCmd = dbConnection.CreateCommand())
+                        {
+                            updateCmd.CommandText = "UPDATE user_account SET user_content = @userContent, password = @password WHERE login = @login";
+                            updateCmd.Parameters.AddWithValue("userContent", userContent);
+                            updateCmd.Parameters.AddWithValue("password", password);
+                            updateCmd.Parameters.AddWithValue("login", login);
+
+                            await updateCmd.ExecuteNonQueryAsync();
+                        }
+                    }
+                    else
+                    {
+                        // Insert new record
+                        using (var insertCmd = dbConnection.CreateCommand())
+                        {
+                            insertCmd.CommandText = "INSERT INTO user_account (user_content, password, login) VALUES (@userContent, @password, @login)";
+                            insertCmd.Parameters.AddWithValue("userContent", userContent);
+                            insertCmd.Parameters.AddWithValue("password", password);
+                            insertCmd.Parameters.AddWithValue("login", login);
+
+                            await insertCmd.ExecuteNonQueryAsync();
+                        }
+                    }
+
+                    lobby.SendMessagePlayer($"true", ws, requestId);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error AddUserData command: {e}");
+            }
+        }
 
         private async Task Login(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
