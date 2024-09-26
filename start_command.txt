@@ -1,1 +1,1 @@
-nohup python3 app.py > output.txt 2>&1 &
+nohup python3 app.py > server_output.txt 2>&1 &
