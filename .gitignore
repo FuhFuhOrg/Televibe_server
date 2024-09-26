@@ -7,6 +7,14 @@
 *.bin
 *.suo
 *.futdcache.v2
+*.log
+*.env
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+*.db
+*.sqlite3
 obj/Debug/net8.0/shooter_server.GeneratedMSBuildEditorConfig.editorconfig
 obj/Debug/net8.0/shooter_server.AssemblyInfo.cs
 .vs/shooter_server/DesignTimeBuild/.dtbcache.v2
