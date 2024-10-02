@@ -52,6 +52,8 @@ namespace shooter_server
                     return;
                 }
 
+                Console.WriteLine(sqlCommand);
+
                 try
                 {
                     // Определение типа SQL-команды
