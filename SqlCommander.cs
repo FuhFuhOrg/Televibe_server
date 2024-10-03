@@ -59,8 +59,12 @@ namespace shooter_server
                     // Определение типа SQL-команды
                     switch (sqlCommand)
                     {
+
+                        case string s when s.StartsWith("AddQueue"):
+                            await Task.Run(() => AltSendMessage(sqlCommand, senderId, dbConnection, lobby, webSocket));
+                            break;
                         case string s when s.StartsWith("AltSendMessage"):
-                            //RW
+                            //Del
                             await Task.Run(() => AltSendMessage(sqlCommand, senderId, dbConnection, lobby, webSocket));
                             break;
                         case string s when s.StartsWith("addUserToChat"):
@@ -696,29 +700,52 @@ namespace shooter_server
             {
                 // SendMessage requestId id_user
                 List<string> credentials = new List<string>(sqlCommand.Split(' '));
-
                 credentials.RemoveAt(0);
 
                 int requestId = int.Parse(credentials[0]);
-
                 byte[] password = Convert.FromBase64String(credentials[1]);
                 byte[] login = Convert.FromBase64String(credentials[2]);
 
+                // Выполняем запрос для получения данных о подпользователях
                 using (var cursor = dbConnection.CreateCommand())
                 {
-                    cursor.CommandText = "SELECT user_content FROM user_account WHERE login = @login AND password = @password";
+                    cursor.CommandText = @"
+                SELECT 
+                    s.ChatId, 
+                    s.SubuserId, 
+                    s.PrivateKey, 
+                    s.PublicKey 
+                FROM 
+                    Subuser s
+                JOIN 
+                    Anon a ON s.AnonId = a.AnonId
+                WHERE 
+                    a.Login = @login AND a.Password = @password";
+
                     cursor.Parameters.AddWithValue("login", login);
                     cursor.Parameters.AddWithValue("password", password);
 
                     using (var reader = await cursor.ExecuteReaderAsync())
                     {
-                        if (reader.Read())
+                        var resultList = new List<string>();
+
+                        while (reader.Read())
                         {
-                            byte[] user_content = reader.GetFieldValue<byte[]>(0);
+                            byte[] chatId = reader.GetFieldValue<byte[]>(0);
+                            int subuserId = reader.GetInt32(1);
+                            byte[] privateKey = reader.GetFieldValue<byte[]>(2);
+                            byte[] publicKey = reader.GetFieldValue<byte[]>(3);
 
-                            string result = Convert.ToBase64String(user_content);
+                            // Формируем строку для каждого подпользователя
+                            string result = $"{Convert.ToBase64String(chatId)} {subuserId} {Convert.ToBase64String(privateKey)} {Convert.ToBase64String(publicKey)}";
+                            resultList.Add(result);
+                        }
 
-                            lobby.SendMessagePlayer(result, ws, requestId);
+                        // Отправляем все результаты в одном сообщении
+                        if (resultList.Count > 0)
+                        {
+                            string allResults = string.Join(", ", resultList);
+                            lobby.SendMessagePlayer(allResults, ws, requestId);
                         }
                     }
                 }
@@ -728,6 +755,7 @@ namespace shooter_server
                 Console.WriteLine($"Error GetUserData command: {e}");
             }
         }
+
 
         private async Task AltRegister(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
