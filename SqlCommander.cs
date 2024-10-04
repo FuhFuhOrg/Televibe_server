@@ -52,7 +52,7 @@ namespace shooter_server
                     return;
                 }
 
-                Console.WriteLine(sqlCommand);
+                //Console.WriteLine(sqlCommand);
 
                 try
                 {
@@ -79,9 +79,9 @@ namespace shooter_server
                             //RW
                             await Task.Run(() => DeleteChat(sqlCommand, senderId, dbConnection, lobby, webSocket));
                             break;
-                        case string s when s.StartsWith("AltLogin"):
+                        case string s when s.StartsWith("Login"):
                             //RW
-                            await Task.Run(() => AltLogin(sqlCommand, senderId, dbConnection, lobby, webSocket));
+                            await Task.Run(() => Login(sqlCommand, senderId, dbConnection, lobby, webSocket));
                             break;
                         case string s when s.StartsWith("AltRegister"):
                             //RW
@@ -694,67 +694,61 @@ namespace shooter_server
         }
 
 
-        private async Task AltLogin(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
+        private async Task Login(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
             try
             {
-                // SendMessage requestId id_user
+                // Извлекаем параметры запроса: requestId, login и password
                 List<string> credentials = new List<string>(sqlCommand.Split(' '));
-                credentials.RemoveAt(0);
+                credentials.RemoveAt(0); // Убираем саму команду из запроса
 
                 int requestId = int.Parse(credentials[0]);
-                byte[] password = Convert.FromBase64String(credentials[1]);
-                byte[] login = Convert.FromBase64String(credentials[2]);
+                byte[] login = Convert.FromBase64String(credentials[1]);
+                byte[] password = Convert.FromBase64String(credentials[2]);
 
-                // Выполняем запрос для получения данных о подпользователях
+                // Выполняем запрос для получения AnonId по логину и паролю
                 using (var cursor = dbConnection.CreateCommand())
                 {
                     cursor.CommandText = @"
-                SELECT 
-                    s.ChatId, 
-                    s.SubuserId, 
-                    s.PrivateKey, 
-                    s.PublicKey 
-                FROM 
-                    Subuser s
-                JOIN 
-                    Anon a ON s.AnonId = a.AnonId
-                WHERE 
-                    a.Login = @login AND a.Password = @password";
+                        SELECT 
+                            a.AnonId 
+                        FROM 
+                            Anon a
+                        WHERE 
+                            a.Login = @login AND a.Password = @password";
 
+                    // Добавляем параметры запроса
                     cursor.Parameters.AddWithValue("login", login);
                     cursor.Parameters.AddWithValue("password", password);
 
+                    // Выполняем запрос и читаем результат
                     using (var reader = await cursor.ExecuteReaderAsync())
                     {
-                        var resultList = new List<string>();
-
-                        while (reader.Read())
+                        if (reader.Read())
                         {
-                            byte[] chatId = reader.GetFieldValue<byte[]>(0);
-                            int subuserId = reader.GetInt32(1);
-                            byte[] privateKey = reader.GetFieldValue<byte[]>(2);
-                            byte[] publicKey = reader.GetFieldValue<byte[]>(3);
+                            int anonId = reader.GetInt32(0);
 
-                            // Формируем строку для каждого подпользователя
-                            string result = $"{Convert.ToBase64String(chatId)} {subuserId} {Convert.ToBase64String(privateKey)} {Convert.ToBase64String(publicKey)}";
-                            resultList.Add(result);
+                            // Отправляем AnonId в ответ на успешный логин
+                            string result = $"AnonId: {anonId}";
+                            lobby.SendMessagePlayer(result, ws, requestId);
                         }
-
-                        // Отправляем все результаты в одном сообщении
-                        if (resultList.Count > 0)
+                        else
                         {
-                            string allResults = string.Join(", ", resultList);
-                            lobby.SendMessagePlayer(allResults, ws, requestId);
+                            // Если логин или пароль неверны
+                            string result = "Invalid login or password.";
+                            lobby.SendMessagePlayer(result, ws, requestId);
                         }
                     }
                 }
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Error GetUserData command: {e}");
+                Console.WriteLine($"Error in Login command: {e}");
+                string errorMessage = "Error occurred during login.";
+                lobby.SendMessagePlayer(errorMessage, ws, senderId);
             }
         }
+
 
 
         private async Task AltRegister(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
