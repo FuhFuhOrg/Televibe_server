@@ -33,3 +33,7 @@ obj/Debug/net8.0/shooter_server.GeneratedMSBuildEditorConfig.editorconfig
 obj/Debug/net8.0/shooter_server.AssemblyInfo.cs
 obj/Debug/net8.0/shooter_server.AssemblyInfo.cs
 obj/Debug/net8.0/shooter_server.GeneratedMSBuildEditorConfig.editorconfig
+.vs/slnx.sqlite
+.vs/Televibe_server/v17/Browse.VC.db-shm
+.vs/Televibe_server/v17/Browse.VC.db-wal
+.vs/Televibe_server/v17/Browse.VC.opendb

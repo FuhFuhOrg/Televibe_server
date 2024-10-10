@@ -61,10 +61,7 @@ namespace shooter_server
                     {
 
                         case string s when s.StartsWith("AddQueue"):
-                            await Task.Run(() => AltSendMessage(sqlCommand, senderId, dbConnection, lobby, webSocket));
-                            break;
-                        case string s when s.StartsWith("AltSendMessage"):
-                            //Del
+                            //RW
                             await Task.Run(() => AltSendMessage(sqlCommand, senderId, dbConnection, lobby, webSocket));
                             break;
                         case string s when s.StartsWith("addUserToChat"):
@@ -80,12 +77,12 @@ namespace shooter_server
                             await Task.Run(() => DeleteChat(sqlCommand, senderId, dbConnection, lobby, webSocket));
                             break;
                         case string s when s.StartsWith("Login"):
-                            //RW
+                            //OK
                             await Task.Run(() => Login(sqlCommand, senderId, dbConnection, lobby, webSocket));
                             break;
                         case string s when s.StartsWith("AltRegister"):
                             //RW
-                            await Task.Run(() => AltRegister(sqlCommand, senderId, dbConnection, lobby, webSocket));
+                            await Task.Run(() => Register(sqlCommand, senderId, dbConnection, lobby, webSocket));
                             break;
                         default:
                             Console.WriteLine("Command not found");
@@ -729,13 +726,13 @@ namespace shooter_server
                             int anonId = reader.GetInt32(0);
 
                             // Отправляем AnonId в ответ на успешный логин
-                            string result = $"AnonId: {anonId}";
+                            string result = $"true {anonId}";
                             lobby.SendMessagePlayer(result, ws, requestId);
                         }
                         else
                         {
                             // Если логин или пароль неверны
-                            string result = "Invalid login or password.";
+                            string result = "false Invalid login or password";
                             lobby.SendMessagePlayer(result, ws, requestId);
                         }
                     }
@@ -751,72 +748,55 @@ namespace shooter_server
 
 
 
-        private async Task AltRegister(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
+        private async Task Register(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
             try
             {
-                // SendMessage requestId id_user password login user_content
+                // SendMessage requestId login password
                 List<string> credentials = new List<string>(sqlCommand.Split(' '));
 
                 credentials.RemoveAt(0);
 
                 int requestId = int.Parse(credentials[0]);
-
-                byte[] password = Convert.FromBase64String(credentials[1]);
-                byte[] login = Convert.FromBase64String(credentials[2]);
-
-                byte[] userContent = Array.Empty<byte>();
-                try
-                {
-                    userContent = Convert.FromBase64String(credentials[3]);
-                }
-                catch (FormatException ex)
-                {
-                    //Console.WriteLine("Error decoding Base64 string: " + ex.Message);
-                }
+                byte[] login = Convert.FromBase64String(credentials[1]);
+                byte[] password = Convert.FromBase64String(credentials[2]);
 
                 // Check if the login already exists
                 using (var checkCmd = dbConnection.CreateCommand())
                 {
-                    checkCmd.CommandText = "SELECT COUNT(*) FROM user_account WHERE login = @login";
+                    checkCmd.CommandText = "SELECT COUNT(*) FROM Anon WHERE Login = @login";
                     checkCmd.Parameters.AddWithValue("login", login);
 
                     int count = Convert.ToInt32(await checkCmd.ExecuteScalarAsync());
 
                     if (count > 0)
                     {
-                        // Update existing record
-                        using (var updateCmd = dbConnection.CreateCommand())
-                        {
-                            updateCmd.CommandText = "UPDATE user_account SET user_content = @userContent, password = @password WHERE login = @login";
-                            updateCmd.Parameters.AddWithValue("userContent", userContent);
-                            updateCmd.Parameters.AddWithValue("password", password);
-                            updateCmd.Parameters.AddWithValue("login", login);
-
-                            await updateCmd.ExecuteNonQueryAsync();
-                        }
+                        // Login already exists
+                        lobby.SendMessagePlayer($"false User with this login already exists", ws, requestId);
                     }
                     else
                     {
                         // Insert new record
                         using (var insertCmd = dbConnection.CreateCommand())
                         {
-                            insertCmd.CommandText = "INSERT INTO user_account (user_content, password, login) VALUES (@userContent, @password, @login)";
-                            insertCmd.Parameters.AddWithValue("userContent", userContent);
-                            insertCmd.Parameters.AddWithValue("password", password);
+                            insertCmd.CommandText = "INSERT INTO Anon (Login, Password) VALUES (@login, @password)";
                             insertCmd.Parameters.AddWithValue("login", login);
+                            insertCmd.Parameters.AddWithValue("password", password);
 
                             await insertCmd.ExecuteNonQueryAsync();
+
+                            // Registration successful
+                            lobby.SendMessagePlayer($"true", ws, requestId);
                         }
                     }
-
-                    lobby.SendMessagePlayer($"true", ws, requestId);
                 }
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Error AddUserData command: {e}");
+                Console.WriteLine($"Error Register command: {e}");
+                lobby.SendMessagePlayer($"false Error: {e.Message}", ws, requestId);
             }
         }
+
     }
 }
