@@ -740,9 +740,7 @@ namespace shooter_server
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Error in Login command: {e}");
-                string errorMessage = "Error occurred during login.";
-                lobby.SendMessagePlayer(errorMessage, ws, senderId);
+                Console.WriteLine($"Error SendMessage command: {e}");
             }
         }
 
@@ -793,8 +791,7 @@ namespace shooter_server
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Error Register command: {e}");
-                lobby.SendMessagePlayer($"false Error: {e.Message}", ws, requestId);
+                Console.WriteLine($"Error SendMessage command: {e}");
             }
         }
 
