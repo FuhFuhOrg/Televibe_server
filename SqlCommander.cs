@@ -772,7 +772,7 @@ namespace shooter_server
                     if (count > 0)
                     {
                         // Login already exists
-                        lobby.SendMessagePlayer($"false User with this login already exists", ws, requestId);
+                        lobby.SendMessagePlayer($"User with this login already exists", ws, requestId);
                     }
                     else
                     {
