@@ -151,6 +151,7 @@ namespace shooter_server
 
 
         // Добавить пользователя в чат
+        /*
         private async Task addUserToChat(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
             try
@@ -216,6 +217,7 @@ namespace shooter_server
                 //Console.WriteLine($"Error addUserToChat command: {e}");
             }
         }
+        */
 
         private async Task AltSendMessage(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
@@ -318,7 +320,7 @@ namespace shooter_server
                     string chatPassword = credentials[2];
 
                     // Генерация уникального ChatId из 256 байтовых символов
-                    byte[] chatId = GenerateUniqueChatId(dbConnection, preChatId);
+                    byte[] chatId = GenerateUniqueChatId(dbConnection);
 
                     cursor.CommandText = "INSERT INTO chat (chatid, password, isgroup) VALUES (@chatId, @chatPassword, @isGroup);";
                     cursor.Parameters.AddWithValue("chatId", chatId);
