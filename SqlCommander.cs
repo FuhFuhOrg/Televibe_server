@@ -302,7 +302,7 @@ namespace shooter_server
 
 
 
-        public async Task ChatCreate(string sqlCommand, int senderId, NpgsqlConnection dbConnection, WebSocket ws)
+        public async Task ChatCreate(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
             try
             {
@@ -328,7 +328,7 @@ namespace shooter_server
                     await cursor.ExecuteNonQueryAsync();
 
                     // Отправка сообщения о создании чата клиенту
-                    _lobby.SendMessagePlayer(BitConverter.ToString(chatId).Replace("-", ""), ws, requestId);
+                    lobby.SendMessagePlayer(BitConverter.ToString(chatId).Replace("-", ""), ws, requestId);
                 }
             }
             catch (Exception e)
