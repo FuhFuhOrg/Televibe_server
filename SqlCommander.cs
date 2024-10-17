@@ -316,8 +316,8 @@ namespace shooter_server
                     credentials.RemoveAt(0); // Remove "ChatCreate"
 
                     int requestId = int.Parse(credentials[0]);
-                    bool isPrivacy = bool.Parse(credentials[1]);
-                    string chatPassword = credentials[2];
+                    string chatPassword = credentials[1];
+                    bool isPrivacy = bool.Parse(credentials[2]);
 
                     // Генерация уникального ChatId из 256 байтовых символов
                     byte[] chatId = GenerateUniqueChatId(dbConnection);
