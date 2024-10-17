@@ -66,7 +66,7 @@ namespace shooter_server
                             break;
                         case string s when s.StartsWith("addUserToChat"):
                             //RW
-                            await Task.Run(() => addUserToChat(sqlCommand, senderId, dbConnection, lobby, webSocket));
+                            //await Task.Run(() => addUserToChat(sqlCommand, senderId, dbConnection, lobby, webSocket));
                             break;
                         case string s when s.StartsWith("ChatCreate"):
                             //RW
