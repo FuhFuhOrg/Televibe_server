@@ -64,12 +64,12 @@ namespace shooter_server
                             //RW
                             await Task.Run(() => AltSendMessage(sqlCommand, senderId, dbConnection, lobby, webSocket));
                             break;
-                        case string s when s.StartsWith("addUserToChat"):
+                        case string s when s.StartsWith("AddUserToChat"):
                             //RW
-                            //await Task.Run(() => addUserToChat(sqlCommand, senderId, dbConnection, lobby, webSocket));
+                            await Task.Run(() => AddUserToChat(sqlCommand, senderId, dbConnection, lobby, webSocket));
                             break;
                         case string s when s.StartsWith("ChatCreate"):
-                            //RW
+                            //OK
                             await Task.Run(() => ChatCreate(sqlCommand, senderId, dbConnection, lobby, webSocket));
                             break;
                         case string s when s.StartsWith("DeleteChat"):
@@ -150,74 +150,71 @@ namespace shooter_server
         }
 
 
-        // Добавить пользователя в чат
-        /*
-        private async Task addUserToChat(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
+        // Добавить подюзера в чат
+        private async Task AddSubuserToChat(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
             try
             {
                 using (var cursor = dbConnection.CreateCommand())
                 {
-                    //Console.WriteLine(sqlCommand);
-
-                    int idUser = GenerateUniqueUserId(dbConnection);
-
-                    // addUserToChat requestId publicKey idChat chatPassword 
+                    // addSubuserToChat requestId chatId privateKey publicKey anonId
                     List<string> credentials = new List<string>(sqlCommand.Split(' '));
                     credentials.RemoveAt(0);
 
                     int requestId = int.Parse(credentials[0]);
-                    credentials.RemoveAt(0);
 
-                    byte[] publicKey = Convert.FromBase64String(credentials[0]);
-                    credentials.RemoveAt(0);
+                    byte[] chatId = Convert.FromBase64String(credentials[1]);
 
-                    if (credentials.Count == 2 || credentials.Count == 1)
+                    byte[] privateKey = Convert.FromBase64String(credentials[2]);
+
+                    byte[] publicKey = Convert.FromBase64String(credentials[3]);
+
+                    int anonId = int.Parse(credentials[4]);
+
+                    cursor.Parameters.AddWithValue("chatid", chatId);
+
+                    // Проверка существования чата
+                    cursor.CommandText = @"SELECT chatid FROM chat WHERE chatid = @chatid;";
+
+                    using (var reader = await cursor.ExecuteReaderAsync())
                     {
-                        // Если чат с паролем
-                        string idChat = credentials[0];
-                        string chatPassword = credentials.Count == 2 ? credentials[1] : "";
-
-                        cursor.Parameters.AddWithValue("idChat", idChat);
-                        cursor.Parameters.AddWithValue("chatPassword", chatPassword);
-
-                        cursor.CommandText = @"SELECT id_chat FROM chat WHERE id_chat = @idChat" +
-                            (chatPassword != "" ? " AND chat_password = @chatPassword" : "") + ";";
-
-                        //Console.WriteLine("\n\n\n" + chatPassword + "\n" + idChat + "\n\n\n");
-
-                        using (var reader = cursor.ExecuteReader())
+                        if (await reader.ReadAsync())
                         {
-                            if (await reader.ReadAsync())
-                            {
-                                reader.Close();
+                            reader.Close();
 
-                                cursor.Parameters.AddWithValue("idUser", idUser);
-                                cursor.Parameters.AddWithValue("idChat", idChat);
-                                cursor.Parameters.AddWithValue("publicKey", publicKey);
+                            // Создание нового подюзера
+                            int subuserId = GenerateUniqueSubuserId(dbConnection);
+                            string username = "std";
 
-                                cursor.CommandText = @"INSERT INTO users (id_user, id_chat, public_key) VALUES (@idUser, @idChat, @publicKey);";
+                            cursor.Parameters.AddWithValue("subuserid", subuserId);
+                            cursor.Parameters.AddWithValue("privatekey", privateKey);
+                            cursor.Parameters.AddWithValue("publickey", publicKey);
+                            cursor.Parameters.AddWithValue("username", username);
+                            cursor.Parameters.AddWithValue("anonid", anonId);
 
-                                await cursor.ExecuteNonQueryAsync();
+                            cursor.CommandText = @"
+                        INSERT INTO subuser (chatid, subuserid, privatekey, publickey, username, anonid)
+                        VALUES (@chatid, @subuserid, @privatekey, @publickey, @username, @anonid);";
 
-                                //Console.WriteLine($"Success");
+                            await cursor.ExecuteNonQueryAsync();
 
-                                lobby.SendMessagePlayer(idUser.ToString(), ws, requestId);
-                            }
-                            else
-                            {
-                                //Console.WriteLine("No matching records found.");
-                            }
+                            // Отправка подтверждения
+                            lobby.SendMessagePlayer($"true {subuserId.ToString()}", ws, requestId);
+                        }
+                        else
+                        {
+                            // Логирование или отправка сообщения об ошибке
+                            //Console.WriteLine("Chat not found.");
                         }
                     }
                 }
             }
             catch (Exception e)
             {
-                //Console.WriteLine($"Error addUserToChat command: {e}");
+                // Обработка исключений
+                //Console.WriteLine($"Error in AddSubuserToChat command: {e}");
             }
         }
-        */
 
         private async Task AltSendMessage(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
@@ -302,8 +299,6 @@ namespace shooter_server
             }
         }
 
-
-
         public async Task ChatCreate(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
             try
@@ -330,7 +325,7 @@ namespace shooter_server
                     await cursor.ExecuteNonQueryAsync();
 
                     // Отправка сообщения о создании чата клиенту
-                    lobby.SendMessagePlayer(BitConverter.ToString(chatId).Replace("-", ""), ws, requestId);
+                    lobby.SendMessagePlayer($"true {BitConverter.ToString(chatId).Replace("-", "")}", ws, requestId);
                 }
             }
             catch (Exception e)
