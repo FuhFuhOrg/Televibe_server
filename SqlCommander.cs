@@ -66,7 +66,7 @@ namespace shooter_server
                             break;
                         case string s when s.StartsWith("AddUserToChat"):
                             //RW
-                            await Task.Run(() => AddUserToChat(sqlCommand, senderId, dbConnection, lobby, webSocket));
+                            await Task.Run(() => AddSubuserToChat(sqlCommand, senderId, dbConnection, lobby, webSocket));
                             break;
                         case string s when s.StartsWith("ChatCreate"):
                             //OK
@@ -231,7 +231,7 @@ namespace shooter_server
                     cursor.CommandText = @"SELECT COUNT(*) FROM subuser WHERE subuserid = @subuserId;";
                     cursor.Parameters.AddWithValue("subuserId", newId);
 
-                    int count = (int)await cursor.ExecuteScalarAsync();
+                    var count = cursor.ExecuteScalar();
 
                     // Если ID уникален, выходим из цикла
                     if (count == 0)
