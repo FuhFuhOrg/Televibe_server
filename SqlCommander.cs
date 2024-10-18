@@ -218,7 +218,7 @@ namespace shooter_server
 
         private int GenerateUniqueSubuserId(NpgsqlConnection dbConnection)
         {
-            int newId;
+            int newId = -1;
             bool isUnique = false;
 
             while (!isUnique)
@@ -234,7 +234,7 @@ namespace shooter_server
                     var count = cursor.ExecuteScalar();
 
                     // Если ID уникален, выходим из цикла
-                    if (count == 0)
+                    if (((int)count) == 0)
                     {
                         isUnique = true;
                     }
