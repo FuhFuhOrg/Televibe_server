@@ -216,28 +216,32 @@ namespace shooter_server
             }
         }
 
-        private byte[] GenerateUniqueChatId(NpgsqlConnection dbConnection)
+        private async Task<int> GenerateUniqueSubuserId(NpgsqlConnection dbConnection)
         {
-            byte[] chatId = new byte[256];
-            using (var rng = RandomNumberGenerator.Create())
+            int newId;
+            bool isUnique = false;
+
+            while (!isUnique)
             {
-                bool isUnique = false;
-                while (!isUnique)
+                // Генерируем случайное число для SubuserId
+                newId = new Random().Next(1, int.MaxValue);
+
+                using (var cursor = dbConnection.CreateCommand())
                 {
-                    rng.GetBytes(chatId);
+                    cursor.CommandText = @"SELECT COUNT(*) FROM subuser WHERE subuserid = @subuserId;";
+                    cursor.Parameters.AddWithValue("subuserId", newId);
 
-                    // Проверка на уникальность в базе данных
-                    using (var cursor = dbConnection.CreateCommand())
+                    int count = (int)await cursor.ExecuteScalarAsync();
+
+                    // Если ID уникален, выходим из цикла
+                    if (count == 0)
                     {
-                        cursor.CommandText = "SELECT COUNT(*) FROM chat WHERE chatid = @chatId;";
-                        cursor.Parameters.AddWithValue("chatId", chatId);
-
-                        var result = cursor.ExecuteScalar();
-                        isUnique = result != null && Convert.ToInt32(result) == 0;
+                        isUnique = true;
                     }
                 }
             }
-            return chatId;
+
+            return newId;
         }
 
         private async Task AltSendMessage(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
