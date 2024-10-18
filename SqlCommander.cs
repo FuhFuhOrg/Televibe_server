@@ -216,6 +216,30 @@ namespace shooter_server
             }
         }
 
+        private byte[] GenerateUniqueChatId(NpgsqlConnection dbConnection)
+        {
+            byte[] chatId = new byte[256];
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                bool isUnique = false;
+                while (!isUnique)
+                {
+                    rng.GetBytes(chatId);
+
+                    // Проверка на уникальность в базе данных
+                    using (var cursor = dbConnection.CreateCommand())
+                    {
+                        cursor.CommandText = "SELECT COUNT(*) FROM chat WHERE chatid = @chatId;";
+                        cursor.Parameters.AddWithValue("chatId", chatId);
+
+                        var result = cursor.ExecuteScalar();
+                        isUnique = result != null && Convert.ToInt32(result) == 0;
+                    }
+                }
+            }
+            return chatId;
+        }
+
         private async Task AltSendMessage(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
             try
