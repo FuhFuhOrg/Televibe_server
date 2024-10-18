@@ -216,7 +216,7 @@ namespace shooter_server
             }
         }
 
-        private async Task<int> GenerateUniqueSubuserId(NpgsqlConnection dbConnection)
+        private int GenerateUniqueSubuserId(NpgsqlConnection dbConnection)
         {
             int newId;
             bool isUnique = false;
