@@ -193,8 +193,8 @@ namespace shooter_server
                             cursor.Parameters.AddWithValue("anonid", anonId);
 
                             cursor.CommandText = @"
-                        INSERT INTO subuser (chatid, subuserid, privatekey, publickey, username, anonid)
-                        VALUES (@chatid, @subuserid, @privatekey, @publickey, @username, @anonid);";
+                                INSERT INTO subuser (chatid, subuserid, privatekey, publickey, username, anonid)
+                                VALUES (@chatid, @subuserid, @privatekey, @publickey, @username, @anonid);";
 
                             await cursor.ExecuteNonQueryAsync();
 
@@ -204,7 +204,7 @@ namespace shooter_server
                         else
                         {
                             // Логирование или отправка сообщения об ошибке
-                            //Console.WriteLine("Chat not found.");
+                            Console.WriteLine("Chat not found.");
                         }
                     }
                 }
@@ -212,7 +212,7 @@ namespace shooter_server
             catch (Exception e)
             {
                 // Обработка исключений
-                //Console.WriteLine($"Error in AddSubuserToChat command: {e}");
+                Console.WriteLine($"Error in AddSubuserToChat command: {e}");
             }
         }
 
