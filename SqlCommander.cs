@@ -168,14 +168,10 @@ namespace shooter_server
                     byte[] publicKey = Encoding.UTF8.GetBytes(credentials[2]);
 
                     string chatIdStr = credentials[3];
-                    byte[] chatId = Enumerable.Range(0, chatIdStr.Length)
-                        .Where(x => x % 2 == 0)
-                        .Select(x => Convert.ToByte(chatIdStr.Substring(x, 2), 16))
-                        .ToArray();
 
                     byte[] subuserid = Encoding.UTF8.GetBytes(credentials[4]);
 
-                    cursor.Parameters.AddWithValue("chatid", chatId);
+                    cursor.Parameters.AddWithValue("chatid", Encoding.UTF8.GetBytes(chatId));
 
                     // Проверка существования чата
                     cursor.CommandText = @"SELECT chatid FROM chat WHERE chatid = @chatid;";
@@ -347,10 +343,10 @@ namespace shooter_server
                     bool isPrivacy = bool.Parse(credentials[2]);
 
                     // Генерация уникального ChatId из 256 байтовых символов
-                    byte[] chatId = GenerateUniqueChatId(dbConnection);
+                    string chatId = GenerateUniqueChatId(dbConnection);
 
                     cursor.CommandText = "INSERT INTO chat (chatid, password, isgroup) VALUES (@chatId, @chatPassword, @isGroup);";
-                    cursor.Parameters.AddWithValue("chatId", chatId);
+                    cursor.Parameters.AddWithValue("chatId", Encoding.UTF8.GetBytes(chatId));
                     cursor.Parameters.AddWithValue("chatPassword", Encoding.UTF8.GetBytes(chatPassword));
                     cursor.Parameters.AddWithValue("isGroup", isPrivacy);
 
@@ -366,28 +362,39 @@ namespace shooter_server
             }
         }
 
-        private byte[] GenerateUniqueChatId(NpgsqlConnection dbConnection)
+        private string GenerateUniqueChatId(NpgsqlConnection dbConnection)
         {
-            byte[] chatId = new byte[256];
-            using (var rng = RandomNumberGenerator.Create())
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            string chatId;
+            bool isUnique = false;
+
+            Random random = new Random(); // Создаем объект Random для генерации случайных чисел
+
+            while (!isUnique)
             {
-                bool isUnique = false;
-                while (!isUnique)
+                // Генерация 64 случайных символов
+                char[] chatIdChars = new char[64];
+
+                for (int i = 0; i < chatIdChars.Length; i++)
                 {
-                    rng.GetBytes(chatId);
+                    // Выбор случайного символа из chars
+                    chatIdChars[i] = chars[random.Next(chars.Length)];
+                }
 
-                    // Проверка на уникальность в базе данных
-                    using (var cursor = dbConnection.CreateCommand())
-                    {
-                        cursor.CommandText = "SELECT COUNT(*) FROM chat WHERE chatid = @chatId;";
-                        cursor.Parameters.AddWithValue("chatId", chatId);
+                chatId = new string(chatIdChars);
 
-                        var result = cursor.ExecuteScalar();
-                        isUnique = result != null && Convert.ToInt32(result) == 0;
-                    }
+                // Проверка на уникальность в базе данных
+                using (var cursor = dbConnection.CreateCommand())
+                {
+                    cursor.CommandText = "SELECT COUNT(*) FROM chat WHERE chatid = @chatId;";
+                    cursor.Parameters.AddWithValue("chatId", chatId);
+
+                    var result = cursor.ExecuteScalar();
+                    isUnique = result != null && Convert.ToInt32(result) == 0;
                 }
             }
-            return chatId;
+
+            return chatId; // Возвращаем уникальный идентификатор в строковом формате
         }
 
         private async Task Login(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
