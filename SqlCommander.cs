@@ -167,7 +167,11 @@ namespace shooter_server
 
                     byte[] publicKey = Encoding.UTF8.GetBytes(credentials[2]);
 
-                    byte[] chatId = Encoding.UTF8.GetBytes(credentials[3]);
+                    byte[] chatIdStr = Encoding.UTF8.GetBytes(credentials[3]);
+                    byte[] chatId = Enumerable.Range(0, chatIdStr.Length)
+                        .Where(x => x % 2 == 0)
+                        .Select(x => Convert.ToByte(chatIdStr.Substring(x, 2), 16))
+                        .ToArray();
 
                     byte[] anonId = Encoding.UTF8.GetBytes(credentials[4]);
 
