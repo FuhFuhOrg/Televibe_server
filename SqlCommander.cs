@@ -235,10 +235,10 @@ namespace shooter_server
                     cursor.CommandText = @"SELECT COUNT(*) FROM subuser WHERE subuserid = @subuserId;";
                     cursor.Parameters.AddWithValue("subuserId", newId);
 
-                    int count = int.Parse(cursor.ExecuteScalar());
+                    var count = cursor.ExecuteScalar();
 
                     // Если ID уникален, выходим из цикла
-                    if ((count) == 0)
+                    if (int.Parse(count) == 0)
                     {
                         isUnique = true;
                     }
