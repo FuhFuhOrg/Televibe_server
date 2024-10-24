@@ -167,13 +167,13 @@ namespace shooter_server
 
                     byte[] publicKey = Encoding.UTF8.GetBytes(credentials[2]);
 
-                    byte[] chatIdStr = Encoding.UTF8.GetBytes(credentials[3]);
+                    string chatIdStr = credentials[3];
                     byte[] chatId = Enumerable.Range(0, chatIdStr.Length)
                         .Where(x => x % 2 == 0)
                         .Select(x => Convert.ToByte(chatIdStr.Substring(x, 2), 16))
                         .ToArray();
 
-                    byte[] anonId = Encoding.UTF8.GetBytes(credentials[4]);
+                    byte[] subuserid = Encoding.UTF8.GetBytes(credentials[4]);
 
                     cursor.Parameters.AddWithValue("chatid", chatId);
 
@@ -194,7 +194,7 @@ namespace shooter_server
                             cursor.Parameters.AddWithValue("privatekey", privateKey);
                             cursor.Parameters.AddWithValue("publickey", publicKey);
                             cursor.Parameters.AddWithValue("username", username);
-                            cursor.Parameters.AddWithValue("anonid", anonId);
+                            cursor.Parameters.AddWithValue("subuserid", subuserid);
 
                             cursor.CommandText = @"
                                 INSERT INTO subuser (chatid, subuserid, unicalcode, username, privatekey, publickey)
