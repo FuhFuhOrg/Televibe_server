@@ -238,7 +238,7 @@ namespace shooter_server
                     var count = cursor.ExecuteScalar();
 
                     // Если ID уникален, выходим из цикла
-                    if (int.Parse(count) == 0)
+                    if (((int)count) == 0)
                     {
                         isUnique = true;
                     }
