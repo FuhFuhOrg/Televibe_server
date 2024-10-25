@@ -353,7 +353,7 @@ namespace shooter_server
                     await cursor.ExecuteNonQueryAsync();
 
                     // Отправка сообщения о создании чата клиенту
-                    lobby.SendMessagePlayer($"true {BitConverter.ToString(chatId).Replace("-", "")}", ws, requestId);
+                    lobby.SendMessagePlayer($"true {chatId}", ws, requestId);
                 }
             }
             catch (Exception e)
