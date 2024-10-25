@@ -365,7 +365,7 @@ namespace shooter_server
         private string GenerateUniqueChatId(NpgsqlConnection dbConnection)
         {
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-            string chatId;
+            string chatId = "";
             bool isUnique = false;
 
             Random random = new Random(); // Создаем объект Random для генерации случайных чисел
