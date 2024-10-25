@@ -167,7 +167,7 @@ namespace shooter_server
 
                     byte[] publicKey = Encoding.UTF8.GetBytes(credentials[2]);
 
-                    string chatIdStr = credentials[3];
+                    string chatId = credentials[3];
 
                     byte[] subuserid = Encoding.UTF8.GetBytes(credentials[4]);
 
