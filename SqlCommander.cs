@@ -171,7 +171,7 @@ namespace shooter_server
 
                     byte[] subuserid = Encoding.UTF8.GetBytes(credentials[4]);
 
-                    cursor.Parameters.AddWithValue("chatid", Encoding.UTF8.GetBytes(chatId));
+                    cursor.Parameters.AddWithValue("chatid", chatId);
 
                     // Проверка существования чата
                     cursor.CommandText = @"SELECT chatid FROM chat WHERE chatid = @chatid;";
