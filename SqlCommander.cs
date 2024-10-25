@@ -342,11 +342,10 @@ namespace shooter_server
                     string chatPassword = credentials[1];
                     bool isPrivacy = bool.Parse(credentials[2]);
 
-                    // Генерация уникального ChatId из 256 байтовых символов
                     string chatId = GenerateUniqueChatId(dbConnection);
 
                     cursor.CommandText = "INSERT INTO chat (chatid, password, isgroup) VALUES (@chatId, @chatPassword, @isGroup);";
-                    cursor.Parameters.AddWithValue("chatId", Encoding.UTF8.GetBytes(chatId));
+                    cursor.Parameters.AddWithValue("chatId", chatId);
                     cursor.Parameters.AddWithValue("chatPassword", Encoding.UTF8.GetBytes(chatPassword));
                     cursor.Parameters.AddWithValue("isGroup", isPrivacy);
 
