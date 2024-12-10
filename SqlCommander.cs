@@ -52,7 +52,7 @@ namespace shooter_server
                     return;
                 }
 
-                //Console.WriteLine(sqlCommand);
+                Console.WriteLine(sqlCommand);
 
                 try
                 {
