@@ -13,6 +13,7 @@ using System.ComponentModel;
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
+using System.Text.Json;
 
 
 namespace shooter_server
@@ -66,7 +67,7 @@ namespace shooter_server
                             await Task.Run(() => AltSendMessage(sqlCommand, senderId, dbConnection, lobby, webSocket));
                             break;
                         case string s when s.StartsWith("AddUserToChat"):
-                            //RW
+                            //OK
                             await Task.Run(() => AddSubuserToChat(sqlCommand, senderId, dbConnection, lobby, webSocket));
                             break;
                         case string s when s.StartsWith("ChatCreate"):
@@ -82,8 +83,12 @@ namespace shooter_server
                             await Task.Run(() => Login(sqlCommand, senderId, dbConnection, lobby, webSocket));
                             break;
                         case string s when s.StartsWith("AltRegister"):
-                            //RW
+                            //OK
                             await Task.Run(() => Register(sqlCommand, senderId, dbConnection, lobby, webSocket));
+                            break;
+                        case string s when s.StartsWith("GetQueueMessages"):
+                            //OK
+                            await Task.Run(() => GetQueueMessages(sqlCommand, senderId, dbConnection, lobby, webSocket));
                             break;
                         default:
                             Console.WriteLine("Command not found");
@@ -449,6 +454,65 @@ namespace shooter_server
                 Console.WriteLine($"Error SendMessage command: {e}");
             }
         }
+
+        private async Task GetQueueMessages(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
+        {
+            try
+            {
+                // Разбираем входные параметры
+                List<string> credentials = new List<string>(sqlCommand.Split(' '));
+                credentials.RemoveAt(0);
+
+                int requestId = int.Parse(credentials[0]);
+                string nowChatId = credentials[1];
+                int queueId = int.Parse(credentials[2]); // Преобразуем queueId в int
+
+                // SQL-запрос на получение данных из chatqueue
+                using (var getMessagesCmd = dbConnection.CreateCommand())
+                {
+                    getMessagesCmd.CommandText = @"
+                SELECT changeid, changedata, user_id 
+                FROM chatqueue 
+                WHERE chatid = @nowChatId AND changeid > @queueId
+                ORDER BY changeid ASC"; // Сортировка по возрастанию changeid
+
+                    getMessagesCmd.Parameters.AddWithValue("nowChatId", nowChatId);
+                    getMessagesCmd.Parameters.AddWithValue("queueId", queueId);
+
+                    // Выполняем запрос
+                    using (var reader = await getMessagesCmd.ExecuteReaderAsync())
+                    {
+                        List<Dictionary<string, object>> messages = new List<Dictionary<string, object>>();
+
+                        while (await reader.ReadAsync())
+                        {
+                            int changeId = reader.GetInt32(0);
+                            byte[] changeData = reader.GetFieldValue<byte[]>(1);
+                            int userId = reader.GetInt32(2);
+
+                            // Преобразуем changeData в строку, если это текст
+                            string changeDataString = Encoding.UTF8.GetString(changeData);
+
+                            messages.Add(new Dictionary<string, object>
+                    {
+                        { "changeId", changeId },
+                        { "changeData", changeDataString }, // Или Convert.ToBase64String(changeData) для бинарных данных
+                        { "userId", userId }
+                    });
+                        }
+
+                        // Отправляем результат клиенту
+                        string jsonResponse = JsonSerializer.Serialize(messages);
+                        lobby.SendMessagePlayer(jsonResponse, ws, requestId);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error in GetQueueMessages: {e}");
+            }
+        }
+
 
 
 
