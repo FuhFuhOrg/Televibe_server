@@ -38,12 +38,11 @@ namespace shooter_server
 
         public async Task ExecuteSqlCommand(Lobby lobby, WebSocket webSocket, string sqlCommand, Player player)
         {
-            Console.WriteLine($"Host={host};Username={user};Password={password};Database={database};Port={port}");
             // Создание соединения с базой данных
             using (var dbConnection = new NpgsqlConnection($"Host={host};Username={user};Password={password};Database={database};Port={port}"))
             {
                 await dbConnection.OpenAsync();
-                Console.WriteLine(dbConnection.ConnectionString);
+                //Console.WriteLine(dbConnection.ConnectionString);
 
                 int senderId = player.Id;
 
@@ -54,7 +53,7 @@ namespace shooter_server
                     return;
                 }
 
-                Console.WriteLine(sqlCommand);
+                //Console.WriteLine(sqlCommand);
 
                 try
                 {
