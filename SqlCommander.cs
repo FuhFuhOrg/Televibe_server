@@ -41,13 +41,13 @@ namespace shooter_server
             using (var dbConnection = new NpgsqlConnection($"Host={host};Username={user};Password={password};Database={database};Port={port}"))
             {
                 await dbConnection.OpenAsync();
-                //Console.WriteLine(dbConnection.ConnectionString);
+                Console.WriteLine(dbConnection.ConnectionString);
 
                 int senderId = player.Id;
 
                 if (dbConnection.State != ConnectionState.Open)
                 {
-                    //Console.WriteLine("DB connection error");
+                    Console.WriteLine("DB connection error");
 
                     return;
                 }
