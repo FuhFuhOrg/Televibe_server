@@ -464,6 +464,8 @@ namespace shooter_server
                 byte[] login = Convert.FromBase64String(credentials[1]);
                 byte[] password = Convert.FromBase64String(credentials[2]);
 
+                Console.WriteLine($"R A");
+
                 // Check if the login already exists
                 using (var checkCmd = dbConnection.CreateCommand())
                 {
@@ -471,6 +473,8 @@ namespace shooter_server
                     checkCmd.Parameters.AddWithValue("login", login);
 
                     int count = Convert.ToInt32(await checkCmd.ExecuteScalarAsync());
+
+                    Console.WriteLine($"R B");
 
                     if (count > 0)
                     {
