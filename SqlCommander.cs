@@ -455,6 +455,7 @@ namespace shooter_server
         {
             try
             {
+                Console.WriteLine($"R AA");
                 // SendMessage requestId login password
                 List<string> credentials = new List<string>(sqlCommand.Split(' '));
 
