@@ -17,7 +17,7 @@ namespace shooter_server
                 "localhost",
                 "postgres",
                 "postgres",
-                "TeletypeDB",
+                "teletypedb",
                 5432
             );
 

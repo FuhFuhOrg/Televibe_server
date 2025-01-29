@@ -12,6 +12,7 @@ using System.Net;
 using System.ComponentModel;
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
 
 
 namespace shooter_server
@@ -37,6 +38,7 @@ namespace shooter_server
 
         public async Task ExecuteSqlCommand(Lobby lobby, WebSocket webSocket, string sqlCommand, Player player)
         {
+            Console.WriteLine($"Host={host};Username={user};Password={password};Database={database};Port={port}");
             // Создание соединения с базой данных
             using (var dbConnection = new NpgsqlConnection($"Host={host};Username={user};Password={password};Database={database};Port={port}"))
             {
