@@ -250,7 +250,7 @@ namespace shooter_server
             return newId;
         }
 
-        private async Task SendMessage(string sqlCommand, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
+        private async Task SendMessage(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
             try
             {
