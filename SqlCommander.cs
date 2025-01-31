@@ -62,9 +62,9 @@ namespace shooter_server
                     switch (sqlCommand)
                     {
 
-                        case string s when s.StartsWith("AddQueue"):
+                        case string s when s.StartsWith("SendMessage"):
                             //RW
-                            await Task.Run(() => AltSendMessage(sqlCommand, senderId, dbConnection, lobby, webSocket));
+                            await Task.Run(() => SendMessage(sqlCommand, senderId, dbConnection, lobby, webSocket));
                             break;
                         case string s when s.StartsWith("AddUserToChat"):
                             //OK
@@ -250,86 +250,57 @@ namespace shooter_server
             return newId;
         }
 
-        private async Task AltSendMessage(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
+        private async Task SendMessage(string sqlCommand, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
         {
             try
             {
-                // SendMessage requestId id_sender time_msg msg
+                // Разбираем входные данные
                 List<string> credentials = new List<string>(sqlCommand.Split(' '));
 
-                credentials.RemoveAt(0);
+                credentials.RemoveAt(0); // Убираем "SendMessage"
 
-                int requestId = int.Parse(credentials[0]);
-                int idSender = int.Parse(credentials[1]);
+                int requestId = int.Parse(credentials[0]);  // requestId
+                string chatId = credentials[1];             // chatId
+                byte[] msg;
 
-                string time1 = credentials[2];
-                string time2 = credentials[3];
-                string time = time1 + " " + time2;
-                string format = "yyyy-MM-dd HH:mm:ss";
-                CultureInfo provider = CultureInfo.InvariantCulture;
-                DateTimeOffset timeMsg = DateTimeOffset.ParseExact(time, format, provider);
-
-                byte[] msg = new byte[0];
                 try
                 {
-                    msg = Convert.FromBase64String(credentials[4]);
+                    msg = Convert.FromBase64String(credentials[2]); // Декодируем сообщение
                 }
-                catch (FormatException ex)
+                catch (FormatException)
                 {
-                    // Handle the format exception (e.g., invalid Base64 string)
-                    //Console.WriteLine("Error decoding Base64 string: " + ex.Message);
+                    lobby.SendMessagePlayer($"false Invalid Base64 encoding", ws, requestId);
+                    return;
                 }
 
-                string idChat = "";
+                // Получаем последний changeId в данном чате
+                long changeId;
                 using (var cursor = dbConnection.CreateCommand())
                 {
-                    cursor.Parameters.AddWithValue("idSender", idSender);
-                    cursor.CommandText = "SELECT id_chat FROM users WHERE id_user = @idSender";
+                    cursor.Parameters.AddWithValue("chatId", chatId);
+                    cursor.CommandText = "SELECT COALESCE(MAX(changeid), 0) FROM chatqueue WHERE chatid = @chatId;";
 
                     object result = await cursor.ExecuteScalarAsync();
-                    if (result != null)
-                    {
-                        idChat = (string)result;
-                    }
+                    changeId = (result != DBNull.Value) ? (long)result + 1 : 1;
                 }
 
-                long idMsg;
-
+                // Вставляем новое сообщение
                 using (var cursor = dbConnection.CreateCommand())
                 {
-                    cursor.Parameters.AddWithValue("idSender", idSender);
-                    cursor.CommandText = "SELECT MAX(changeid) FROM chatqueue WHERE user_id = @idSender;";
-
-                    object result = await cursor.ExecuteScalarAsync();
-
-                    if (result != DBNull.Value)
-                    {
-                        idMsg = (long)result;
-                    }
-                    else
-                    {
-                        idMsg = 0;
-                    }
-                }
-
-
-                using (var cursor = dbConnection.CreateCommand())
-                {
-                    cursor.CommandText = "INSERT INTO chatqueue (chatid, changeid, changedata, user_id) VALUES (@idChat, @idMsg, @msg, @idSender)";
-                    // Добавление параметров в команду для предотвращения SQL-инъекций
-                    cursor.Parameters.AddWithValue("idSender", idSender);
-                    cursor.Parameters.AddWithValue("idMsg", idMsg + 1);
-                    cursor.Parameters.AddWithValue("idChat", idChat);
+                    cursor.CommandText = "INSERT INTO chatqueue (chatid, changeid, changedata) VALUES (@chatId, @changeId, @msg)";
+                    cursor.Parameters.AddWithValue("chatId", chatId);
+                    cursor.Parameters.AddWithValue("changeId", changeId);
                     cursor.Parameters.AddWithValue("msg", msg);
 
                     await cursor.ExecuteNonQueryAsync();
-
-                    lobby.SendMessagePlayer($"true", ws, requestId);
                 }
+
+                // Подтверждаем успешную отправку
+                lobby.SendMessagePlayer("true", ws, requestId);
             }
             catch (Exception e)
             {
-                //Console.WriteLine($"Error SendMessage command: {e}");
+                lobby.SendMessagePlayer($"false {e.Message}", ws, 0);
             }
         }
 
