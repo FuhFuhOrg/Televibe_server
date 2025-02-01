@@ -442,7 +442,7 @@ namespace shooter_server
                 using (var getMessagesCmd = dbConnection.CreateCommand())
                 {
                     getMessagesCmd.CommandText = @"
-                SELECT changeid, changedata, user_id 
+                SELECT changeid, changedata 
                 FROM chatqueue 
                 WHERE chatid = @nowChatId AND changeid > @queueId
                 ORDER BY changeid ASC"; // Сортировка по возрастанию changeid
