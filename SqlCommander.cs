@@ -459,17 +459,15 @@ namespace shooter_server
                         {
                             int changeId = reader.GetInt32(0);
                             byte[] changeData = reader.GetFieldValue<byte[]>(1);
-                            int userId = reader.GetInt32(2);
 
                             // Преобразуем changeData в строку, если это текст
                             string changeDataString = Encoding.UTF8.GetString(changeData);
 
                             messages.Add(new Dictionary<string, object>
-                    {
-                        { "changeId", changeId },
-                        { "changeData", changeDataString }, // Или Convert.ToBase64String(changeData) для бинарных данных
-                        { "userId", userId }
-                    });
+                            {
+                                { "changeId", changeId },
+                                { "changeData", changeDataString }
+                            });
                         }
 
                         // Отправляем результат клиенту
