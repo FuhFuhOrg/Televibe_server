@@ -70,6 +70,10 @@ namespace shooter_server
                             //OK
                             await Task.Run(() => AddSubuserToChat(sqlCommand, senderId, dbConnection, lobby, webSocket));
                             break;
+                        case string s when s.StartsWith("SendChatUsers"):
+                            //OK
+                            await Task.Run(() => SendChatUsers(sqlCommand, senderId, dbConnection, lobby, webSocket));
+                            break;
                         case string s when s.StartsWith("ChatCreate"):
                             //OK
                             await Task.Run(() => ChatCreate(sqlCommand, senderId, dbConnection, lobby, webSocket));
@@ -169,13 +173,13 @@ namespace shooter_server
 
                     int requestId = int.Parse(credentials[0]);
 
-                    byte[] privateKey = Encoding.UTF8.GetBytes(credentials[1]);
+                    byte[] privateKey = Convert.FromBase64String(credentials[1]);
 
-                    byte[] publicKey = Encoding.UTF8.GetBytes(credentials[2]);
+                    byte[] publicKey = Convert.FromBase64String(credentials[2]);
 
                     string chatId = credentials[3];
 
-                    byte[] unicalcode = Encoding.UTF8.GetBytes(credentials[4]);
+                    byte[] unicalcode = Convert.FromBase64String(credentials[4]);
 
                     cursor.Parameters.AddWithValue("chatid", chatId);
 
@@ -221,6 +225,56 @@ namespace shooter_server
                 Console.WriteLine($"Error in AddSubuserToChat command: {e}");
             }
         }
+
+        private async Task SendChatUsers(string sqlCommand, int senderId, NpgsqlConnection dbConnection, Lobby lobby, WebSocket ws)
+        {
+            try
+            {
+                using (var cursor = dbConnection.CreateCommand())
+                {
+                    List<string> credentials = new List<string>(sqlCommand.Split(' '));
+                    credentials.RemoveAt(0);
+
+                    int requestId = int.Parse(credentials[0]);
+                    string chatId = credentials[1];
+
+                    cursor.CommandText = @"
+                        SELECT subuserid, privatekey 
+                        FROM subuser
+                        WHERE chatid = @chatid;";
+
+                    cursor.Parameters.AddWithValue("chatid", chatId);
+
+                    using (var reader = await cursor.ExecuteReaderAsync())
+                    {
+                        List<string> usersData = new List<string>();
+
+                        while (await reader.ReadAsync())
+                        {
+                            int subuserId = reader.GetInt32(0);
+                            string privateKeyBase64 = Convert.ToBase64String((byte[])reader["privatekey"]); // Кодируем в Base64
+
+                            usersData.Add($"{subuserId} {privateKeyBase64}");
+                        }
+
+                        if (usersData.Count > 0)
+                        {
+                            string response = "true " + string.Join(" ", usersData);
+                            lobby.SendMessagePlayer(response, ws, requestId);
+                        }
+                        else
+                        {
+                            lobby.SendMessagePlayer("", ws, requestId);
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error in SendChatUsersWithPrivateKeys: {e}");
+            }
+        }
+
 
         private int GenerateUniqueSubuserId(NpgsqlConnection dbConnection)
         {
