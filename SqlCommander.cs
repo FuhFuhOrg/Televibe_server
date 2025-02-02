@@ -465,8 +465,8 @@ namespace shooter_server
                             // Преобразуем changeData в строку, если это текст
                             string changeDataString = Encoding.UTF8.GetString(changeData);
 
-                            Debug.WriteLine(changeData);
-                            Debug.WriteLine(changeDataString);
+                            Console.WriteLine(changeData);
+                            Console.WriteLine(changeDataString);
 
                             messages.Add(new Dictionary<string, object>
                             {
