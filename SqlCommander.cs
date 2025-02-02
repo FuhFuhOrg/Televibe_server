@@ -151,6 +151,8 @@ namespace shooter_server
                     cursor.Parameters.AddWithValue("idChat", idChat);
 
                     await cursor.ExecuteNonQueryAsync();
+
+                    lobby.SendMessagePlayer($"true", ws, requestId);
                 }
             }
             catch (Exception e)
