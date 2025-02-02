@@ -175,16 +175,16 @@ namespace shooter_server
                     int requestId = int.Parse(credentials[0]);
 
                     Console.WriteLine(1);
-                    byte[] privateKey = Convert.FromBase64String(credentials[1]);
+                    byte[] publicKey = Encoding.UTF8.GetBytes(credentials[1]);
 
                     Console.WriteLine(2);
-                    byte[] publicKey = Convert.FromBase64String(credentials[2]);
+                    byte[] privateKey = Encoding.UTF8.GetBytes(credentials[2]);
 
                     Console.WriteLine(3);
                     string chatId = credentials[3];
 
                     Console.WriteLine(4);
-                    byte[] unicalcode = Convert.FromBase64String(credentials[4]);
+                    byte[] unicalcode = Encoding.UTF8.GetBytes(credentials[4]);
 
                     cursor.Parameters.AddWithValue("chatid", chatId);
 
@@ -257,9 +257,9 @@ namespace shooter_server
                         while (await reader.ReadAsync())
                         {
                             int subuserId = reader.GetInt32(0);
-                            string privateKeyBase64 = Convert.ToBase64String((byte[])reader["privatekey"]); // Кодируем в Base64
-
-                            usersData.Add($"{subuserId} {privateKeyBase64}");
+                            byte[] privateKeyBytes = reader["privatekey"] as byte[];
+                            string privateKey = Encoding.UTF8.GetString(privateKeyBytes);
+                            usersData.Add($"{subuserId} {privateKey}");
                         }
 
                         if (usersData.Count > 0)
