@@ -114,52 +114,38 @@ namespace shooter_server
             {
                 using (var cursor = dbConnection.CreateCommand())
                 {
-                    // DeleteChat requestId idChat
+                    // Разбираем команду
                     List<string> credentials = new List<string>(sqlCommand.Split(' '));
-
                     credentials.RemoveAt(0);
 
                     int requestId = int.Parse(credentials[0]);
-                    string idChat = credentials[1];
+                    string chatId = credentials[1];
 
-                    cursor.CommandText = @"SELECT id_user FROM users WHERE id_chat = @idChat;";
-                    cursor.Parameters.AddWithValue("idChat", idChat);
-
-                    var reader = await cursor.ExecuteReaderAsync();
-
-                    while (await reader.ReadAsync())
-                    {
-                        string idUser = reader.GetString(0);
-
-                        using (var command = dbConnection.CreateCommand())
-                        {
-                            command.CommandText = @"DELETE FROM messages WHERE id_sender = @idUser;";
-                            command.Parameters.AddWithValue("idUser", idUser);
-
-                            await command.ExecuteNonQueryAsync();
-                        }
-                    }
-
-                    reader.Close();
-
-                    cursor.CommandText = @"DELETE FROM users WHERE id_chat = @idChat;";
-                    cursor.Parameters.AddWithValue("idChat", idChat);
-
+                    // Удаление из chatqueue
+                    cursor.CommandText = @"DELETE FROM chatqueue WHERE chat_id = @chatId;";
+                    cursor.Parameters.AddWithValue("chatId", chatId);
                     await cursor.ExecuteNonQueryAsync();
 
-                    cursor.CommandText = @"DELETE FROM chat WHERE id_chat = @idChat;";
-                    cursor.Parameters.AddWithValue("idChat", idChat);
-
+                    // Удаление всех пользователей (subuser)
+                    cursor.CommandText = @"DELETE FROM subuser WHERE chat_id = @chatId;";
+                    cursor.Parameters.AddWithValue("chatId", chatId);
                     await cursor.ExecuteNonQueryAsync();
 
+                    // Удаление чата
+                    cursor.CommandText = @"DELETE FROM chat WHERE chat_id = @chatId;";
+                    cursor.Parameters.AddWithValue("chatId", chatId);
+                    await cursor.ExecuteNonQueryAsync();
+
+                    // Отправляем сообщение о завершении операции
                     lobby.SendMessagePlayer($"true", ws, requestId);
                 }
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Error DeleteMessages command: {e}");
+                Console.WriteLine($"Error DeleteChat: {e}");
             }
         }
+
 
 
         // Добавить подюзера в чат
