@@ -122,17 +122,17 @@ namespace shooter_server
                     string chatId = credentials[1];
 
                     // Удаление из chatqueue
-                    cursor.CommandText = @"DELETE FROM chatqueue WHERE chat_id = @chatId;";
+                    cursor.CommandText = @"DELETE FROM chatqueue WHERE chatid = @chatId;";
                     cursor.Parameters.AddWithValue("chatId", chatId);
                     await cursor.ExecuteNonQueryAsync();
 
                     // Удаление всех пользователей (subuser)
-                    cursor.CommandText = @"DELETE FROM subuser WHERE chat_id = @chatId;";
+                    cursor.CommandText = @"DELETE FROM subuser WHERE chatid = @chatId;";
                     cursor.Parameters.AddWithValue("chatId", chatId);
                     await cursor.ExecuteNonQueryAsync();
 
                     // Удаление чата
-                    cursor.CommandText = @"DELETE FROM chat WHERE chat_id = @chatId;";
+                    cursor.CommandText = @"DELETE FROM chat WHERE chatid = @chatId;";
                     cursor.Parameters.AddWithValue("chatId", chatId);
                     await cursor.ExecuteNonQueryAsync();
 
