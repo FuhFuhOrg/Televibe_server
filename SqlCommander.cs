@@ -261,6 +261,7 @@ namespace shooter_server
 
                 int requestId = int.Parse(credentials[0]);  // requestId
                 string chatId = credentials[1];             // chatId
+                int idSender = int.Parse(credentials[2]);             // chatId
                 byte[] msg;
 
                 try
@@ -287,10 +288,11 @@ namespace shooter_server
                 // Вставляем новое сообщение
                 using (var cursor = dbConnection.CreateCommand())
                 {
-                    cursor.CommandText = "INSERT INTO chatqueue (chatid, changeid, changedata) VALUES (@chatId, @changeId, @msg)";
+                    cursor.CommandText = "INSERT INTO chatqueue (chatid, changeid, changedata, senderid) VALUES (@chatId, @changeId, @msg, @senderid)";
                     cursor.Parameters.AddWithValue("chatId", chatId);
                     cursor.Parameters.AddWithValue("changeId", changeId);
                     cursor.Parameters.AddWithValue("msg", msg);
+                    cursor.Parameters.AddWithValue("senderid", idSender);
 
                     await cursor.ExecuteNonQueryAsync();
                 }
@@ -442,10 +444,10 @@ namespace shooter_server
                 using (var getMessagesCmd = dbConnection.CreateCommand())
                 {
                     getMessagesCmd.CommandText = @"
-                SELECT changeid, changedata 
-                FROM chatqueue 
-                WHERE chatid = @nowChatId AND changeid > @queueId
-                ORDER BY changeid ASC"; // Сортировка по возрастанию changeid
+                        SELECT changeid, changedata, senderid
+                        FROM chatqueue 
+                        WHERE chatid = @nowChatId AND changeid > @queueId
+                        ORDER BY changeid ASC"; // Сортировка по возрастанию changeid
 
                     getMessagesCmd.Parameters.AddWithValue("nowChatId", nowChatId);
                     getMessagesCmd.Parameters.AddWithValue("queueId", queueId);
@@ -459,14 +461,15 @@ namespace shooter_server
                         {
                             int changeId = reader.GetInt32(0);
                             byte[] changeData = reader.GetFieldValue<byte[]>(1);
-
+                            int senderid = reader.GetInt32(2);
                             // Преобразуем changeData в строку, если это текст
                             string changeDataString = Encoding.UTF8.GetString(changeData);
 
                             messages.Add(new Dictionary<string, object>
                             {
                                 { "changeId", changeId },
-                                { "changeData", changeDataString }
+                                { "changeData", changeDataString },
+                                { "senderId", senderid }
                             });
                         }
 
