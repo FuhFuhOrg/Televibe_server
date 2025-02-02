@@ -267,6 +267,9 @@ namespace shooter_server
                 try
                 {
                     msg = Convert.FromBase64String(credentials[3]); // Декодируем сообщение
+
+                    Console.WriteLine(credentials[3]);
+                    Console.WriteLine(msg);
                 }
                 catch (FormatException)
                 {
