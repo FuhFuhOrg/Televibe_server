@@ -157,7 +157,7 @@ namespace shooter_server
             }
             catch (Exception e)
             {
-                //Console.WriteLine($"Error DeleteMessages command: {e}");
+                Console.WriteLine($"Error DeleteMessages command: {e}");
             }
         }
 
