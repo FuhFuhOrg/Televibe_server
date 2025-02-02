@@ -267,9 +267,6 @@ namespace shooter_server
                 try
                 {
                     msg = Convert.FromBase64String(credentials[3]); // Декодируем сообщение
-
-                    Console.WriteLine(credentials[3]);
-                    Console.WriteLine(msg);
                 }
                 catch (FormatException)
                 {
@@ -466,10 +463,7 @@ namespace shooter_server
                             byte[] changeData = reader.GetFieldValue<byte[]>(1);
                             int senderid = reader.GetInt32(2);
                             // Преобразуем changeData в строку, если это текст
-                            string changeDataString = Encoding.UTF8.GetString(changeData);
-
-                            Console.WriteLine(changeData);
-                            Console.WriteLine(changeDataString);
+                            string changeDataString = Convert.ToBase64String(changeData);
 
                             messages.Add(new Dictionary<string, object>
                             {
