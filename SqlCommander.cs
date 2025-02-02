@@ -171,14 +171,19 @@ namespace shooter_server
                     List<string> credentials = new List<string>(sqlCommand.Split(' '));
                     credentials.RemoveAt(0);
 
+                    Console.WriteLine(0);
                     int requestId = int.Parse(credentials[0]);
 
+                    Console.WriteLine(1);
                     byte[] privateKey = Convert.FromBase64String(credentials[1]);
 
+                    Console.WriteLine(2);
                     byte[] publicKey = Convert.FromBase64String(credentials[2]);
 
+                    Console.WriteLine(3);
                     string chatId = credentials[3];
 
+                    Console.WriteLine(4);
                     byte[] unicalcode = Convert.FromBase64String(credentials[4]);
 
                     cursor.Parameters.AddWithValue("chatid", chatId);
