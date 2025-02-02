@@ -460,11 +460,13 @@ namespace shooter_server
                         while (await reader.ReadAsync())
                         {
                             int changeId = reader.GetInt32(0);
-                            string base64EncodedMessage = reader.GetFieldValue<string>(1);
+                            byte[] changeData = reader.GetFieldValue<byte[]>(1);
                             int senderid = reader.GetInt32(2);
                             // Преобразуем changeData в строку, если это текст
-                            byte[] decodedMessageBytes = Convert.FromBase64String(base64EncodedMessage);
-                            string changeDataString = Encoding.UTF8.GetString(decodedMessageBytes);
+                            string changeDataString = Encoding.UTF8.GetString(changeData);
+
+                            Debug.WriteLine(changeData);
+                            Debug.WriteLine(changeDataString);
 
                             messages.Add(new Dictionary<string, object>
                             {
