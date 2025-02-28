@@ -231,7 +231,7 @@ namespace shooter_server
                     string chatId = credentials[1];
 
                     cursor.CommandText = @"
-                        SELECT subuserid, privatekey 
+                        SELECT subuserid, privatekey, username, image
                         FROM subuser
                         WHERE chatid = @chatid;";
 
@@ -245,8 +245,11 @@ namespace shooter_server
                         {
                             int subuserId = reader.GetInt32(0);
                             byte[] privateKeyBytes = reader["privatekey"] as byte[];
+                            string name = reader["username"] as string;
+                            byte[] imageBytes = reader["image"] as byte[];
                             string privateKey = Encoding.UTF8.GetString(privateKeyBytes);
-                            usersData.Add($"{subuserId} {privateKey}");
+                            string image = Encoding.UTF8.GetString(imageBytes);
+                            usersData.Add($"{subuserId} {privateKey} {name} {image}");
                         }
 
                         if (usersData.Count > 0)
