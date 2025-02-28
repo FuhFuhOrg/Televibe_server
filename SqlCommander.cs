@@ -169,6 +169,10 @@ namespace shooter_server
 
                     byte[] unicalcode = Encoding.UTF8.GetBytes(credentials[4]);
 
+                    string username = credentials[5];
+
+                    byte[] image = Encoding.UTF8.GetBytes(credentials[6]);
+
                     cursor.Parameters.AddWithValue("chatid", chatId);
 
                     // Проверка существования чата
@@ -182,17 +186,17 @@ namespace shooter_server
 
                             // Создание нового подюзера
                             int subuserId = GenerateUniqueSubuserId(dbConnection);
-                            string username = "std";
 
                             cursor.Parameters.AddWithValue("subuserid", subuserId);
                             cursor.Parameters.AddWithValue("privatekey", privateKey);
                             cursor.Parameters.AddWithValue("publickey", publicKey);
                             cursor.Parameters.AddWithValue("username", username);
                             cursor.Parameters.AddWithValue("unicalcode", unicalcode);
+                            cursor.Parameters.AddWithValue("image", image);
 
                             cursor.CommandText = @"
-                                INSERT INTO subuser (chatid, subuserid, unicalcode, username, privatekey, publickey)
-                                VALUES (@chatid, @subuserid, @unicalcode, @username, @privatekey, @publickey);";
+                                INSERT INTO subuser (chatid, subuserid, unicalcode, username, privatekey, publickey, image)
+                                VALUES (@chatid, @subuserid, @unicalcode, @username, @privatekey, @publickey, @image);";
 
                             await cursor.ExecuteNonQueryAsync();
 
